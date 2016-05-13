@@ -1,0 +1,5 @@
+(replaceall 'dog 'cat '(I love my dog)) ;; (I love my cat)
+(replaceall '+ '- '(+ (+ 1 2) 4)) ;; (- (- 1 2) 4)
+(map ++ '(1 2 3)) ;; (2 3 4)
+(map sq '(1 2 3)) ;; (1 4 9)
+(map (lambda (x) (+ 3 x)) '(1 2 3)) ;; (4 5 6)
