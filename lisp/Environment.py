@@ -1,6 +1,7 @@
 from .LispErrors import *
 from .LispExpression import *
 from functools import reduce
+import sys
 
 LAMBDA = "lambda"
 DEFMACRO = "defmacro"
@@ -95,20 +96,19 @@ class DefaultEnvironment(Environment):
                 raise WrongNumParamsError(DEFMACRO, 3, len(args))
             else:
                 env.define(
-                    args[0], MacroExpression(args[1:], env, args[0]))
+                    args[0], MacroExpression(args[1:], args[0]))
                 return args[0]
-        self.define(SymbolExpression(DEFMACRO, self), LispFunction(DEFMACRO, defmacro, self))
+        self.define(SymbolExpression(DEFMACRO), LispFunction(DEFMACRO, defmacro))
 
     def _define_lambda(self):
         """Defines the lambda function"""
-        self.define(SymbolExpression(LAMBDA, self), LispFunction(
+        self.define(SymbolExpression(LAMBDA), LispFunction(
             LAMBDA,
-            lambda args, env : LambdaExpression(args, env),
-            self))
+            lambda args, env : LambdaExpression(args, env)))
 
     def _define_quote(self):
         """Defines the quote function"""
-        self.define(SymbolExpression(QUOTE, self), LispFunction(QUOTE, lambda args, env : args[0], self))
+        self.define(SymbolExpression(QUOTE), LispFunction(QUOTE, lambda args, env : args[0]))
 
 
     def _define_quasiquote(self):
@@ -137,7 +137,7 @@ class DefaultEnvironment(Environment):
                     # comma to be mapped over the elements of the value
                     # of the following expression.
                     if not tagged_data(args).atom() and tagged(tagged_data(args), SPLICE):
-                        return ListExpression([tag(UNQUOTE, exp) for exp in result.value], env)
+                        return ListExpression([tag(UNQUOTE, exp) for exp in result.value])
                     else:
                         return make_list(result if backquotes == 1 else tag(UNQUOTE, result.car()))
                 elif tagged(args, SPLICE):
@@ -152,8 +152,7 @@ class DefaultEnvironment(Environment):
                         ListExpression(
                             reduce(lambda x,y: x+quasiquote_expand(y, backquotes).value,
                                    args.value,
-                                   []),
-                            env))
+                                   [])))
 
 
             def tagged(args, tag):
@@ -166,16 +165,16 @@ class DefaultEnvironment(Environment):
                 
             def tag(tag, args):
                 """Adds a tag to the argument"""
-                return ListExpression([SymbolExpression(tag, env), args], env)
+                return ListExpression([SymbolExpression(tag), args])
 
             def make_list(args):
                 """Turns argument into a list"""
-                return ListExpression([args], env)
+                return ListExpression([args])
 
             return quasiquote_expand(args[0], 1).car()
 
 
-        self.define(SymbolExpression(QUASIQUOTE, self), LispFunction(QUASIQUOTE, quasiquote, self))
+        self.define(SymbolExpression(QUASIQUOTE), LispFunction(QUASIQUOTE, quasiquote))
 
         
     def _define_if(self):
@@ -192,7 +191,7 @@ class DefaultEnvironment(Environment):
                         return Nils.nil
                 else:
                     return args[1].evaluate(env)
-        self.define(SymbolExpression(IF, self), LispFunction(IF, if_ex, self))
+        self.define(SymbolExpression(IF), LispFunction(IF, if_ex))
 
     def _define_atom(self):
         """Defines the atom function. True if argument is an atom, else ()"""
@@ -203,8 +202,8 @@ class DefaultEnvironment(Environment):
                 arg = args[0].evaluate(env)
                 return arg if arg.atom() else Nils.nil
         self.define(
-            SymbolExpression(ATOM, self), LispFunction(
-                ATOM, atom, self))
+            SymbolExpression(ATOM), LispFunction(
+                ATOM, atom))
 
     def _define_car(self):
         """Defines the car function"""
@@ -217,7 +216,7 @@ class DefaultEnvironment(Environment):
             except AttributeError:
                 raise TypeError(CAR, exp, "List or Symbol")
 
-        self.define(SymbolExpression(CAR, self), LispFunction(CAR, car, self))
+        self.define(SymbolExpression(CAR), LispFunction(CAR, car))
 
     def _define_cdr(self):
         """Defines the cdr function"""
@@ -229,7 +228,7 @@ class DefaultEnvironment(Environment):
                 return exp.cdr()
             except AttributeError:
                 raise TypeError(CDR, exp, "List or Symbol")
-        self.define(SymbolExpression(CDR, self), LispFunction(CDR, cdr, self))
+        self.define(SymbolExpression(CDR), LispFunction(CDR, cdr))
 
     def _define_cons(self):
         """Defines the cons function"""
@@ -243,7 +242,7 @@ class DefaultEnvironment(Environment):
             except AttributeError:
                 raise TypeError(CONS, exp_2, "List or Symbol")
                 
-        self.define(SymbolExpression(CONS, self), LispFunction(CONS, cons, self))
+        self.define(SymbolExpression(CONS), LispFunction(CONS, cons))
 
     def _define_subtract(self):
         """Defines the subtract function"""        
@@ -256,7 +255,7 @@ class DefaultEnvironment(Environment):
                 raise TypeError(SUBTRACT, "{} and {}".format(expr1, expr2), "Numbers")
             else:
                 return expr1.subtract(expr2)
-        self.define(SymbolExpression(SUBTRACT, self), LispFunction(SUBTRACT, subtract, self))
+        self.define(SymbolExpression(SUBTRACT), LispFunction(SUBTRACT, subtract))
 
     def _define_lessthan(self):
         """Defines the less than function"""        
@@ -268,9 +267,9 @@ class DefaultEnvironment(Environment):
             try:
                 return expr1.lessthan(expr2)
             except AttributeError:
-                raise TypeError(SymbolExpression(LESSTHAN, self), "{} and {}".format(expr1, expr2), "Numbers or symbols")
+                raise TypeError(LESSTHAN, "{} and {}".format(expr1, expr2), "Numbers or symbols")
 
-        self.define(SymbolExpression(LESSTHAN, self), LispFunction(LESSTHAN, lessthan, self))
+        self.define(SymbolExpression(LESSTHAN), LispFunction(LESSTHAN, lessthan))
 
     def _define_print_sym(self):
         """Defines print function"""
@@ -286,7 +285,7 @@ class DefaultEnvironment(Environment):
             print(print_val, end="")
             sys.stdout.flush()
             return Nils.null # Return an empty string
-        self.define(SymbolExpression(PRINT, self), LispFunction(PRINT, print_sym, self))
+        self.define(SymbolExpression(PRINT), LispFunction(PRINT, print_sym))
 
     def _define_input_char(self):
         """Defines input char function"""
@@ -328,7 +327,7 @@ class DefaultEnvironment(Environment):
             sys.stdout.flush()
             return ch
 
-        self.define(SymbolExpression(INPUT_CHAR, self), LispFunction(INPUT_CHAR, input_char, self))
+        self.define(SymbolExpression(INPUT_CHAR), LispFunction(INPUT_CHAR, input_char))
 
     def _define_gensym(self):
         """Defines the gensym function to generate a symbol that doesn't yet exist"""
@@ -336,5 +335,5 @@ class DefaultEnvironment(Environment):
         def gensym(args, env):
             nonlocal counter
             counter += 1
-            return SymbolExpression(GENSYM_ESCAPE + str(counter), env)
-        self.define(SymbolExpression(GENSYM, self), LispFunction(GENSYM, gensym, self))
+            return SymbolExpression(GENSYM_ESCAPE + str(counter))
+        self.define(SymbolExpression(GENSYM), LispFunction(GENSYM, gensym))

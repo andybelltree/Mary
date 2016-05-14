@@ -67,6 +67,13 @@
   (if l
       (cons (fn (car l)) (map fn (cdr l)))
   )
+  )
+
+(defmacro do (bindings test &rest body)
+  `(let ,bindings
+     (let ((result (progn ,@body)))
+     (if ,test (do ,bindings ,test ,@body) result))
+     )
  )
 
 ;; From Graham
@@ -199,8 +206,9 @@
 ;  )
 
 (defmacro mapcar (fn &rest ls)
-  `((lambda (fn ls) (if (car ls) (cons (fn (cars ls)) (mapcar fn (cdrs ls))))) ,fn ',ls)
+  `((lambda (fn ls) (if (car ls) (cons (fn (cars ls)) (mapcar fn (cdrs ls))))) ,fn ,',ls)
   )
+
 
 
 (defmacro zip (&rest ls)
@@ -322,22 +330,7 @@
     )
   )
 
-;; This code works with let in Lisp... But not in my interpreter. Perhaps variable capture?
-;; At least seems to work without let.
 (defun min (l)
-  (if (pair? l)
-      (let ((this (car l)))
-	(if
-	 (< (car l) (cadr l))
-	 (min (cons (car l) (cddr l)))
-	 (min (cdr l))
-	 )
-	)
-      (car l)
-   )
-  )
-
-(defun fast-min (l)
   (if (pair? l)
       (let ((this (car l)))
 	(if
@@ -369,7 +362,7 @@
 (defun sort (l)
   (if (pair? l)
       (let ((themin (min l)))
-	(cons (min l) (sort (remove (min l) l)))
+	(cons themin (sort (remove themin l)))
       )
       l
       )

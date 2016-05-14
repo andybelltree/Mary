@@ -17,8 +17,7 @@ LAMBDA="lambda"
 # Lisp Expression objects
 class LispExpression(metaclass=ABCMeta):
     """A generic Lisp Expression"""
-    def __init__(self, value,parent_environment):
-        self.environment = parent_environment
+    def __init__(self, value):
         self.value = value
 
     @abstractmethod
@@ -39,8 +38,8 @@ class LispExpression(metaclass=ABCMeta):
 
 class SymbolExpression(LispExpression):
     """A symbol"""
-    def __init__(self, value, parent_environment):
-        super(SymbolExpression, self).__init__(value, parent_environment)
+    def __init__(self, value):
+        super(SymbolExpression, self).__init__(value)
 
     def evaluate(self, environment):
         """Look up the value in the environment and return"""
@@ -52,43 +51,43 @@ class SymbolExpression(LispExpression):
 
     def car(self):
         """Return the first character of this symbol"""
-        return SymbolExpression(self.value[0], self.environment)
+        return SymbolExpression(self.value[0])
 
     def cdr(self):
         """Return everything but the first character of this symbol"""
         if len(self.value) == 1:
             return Nils.null
         else:
-            return SymbolExpression(self.value[1:], self.environment)
+            return SymbolExpression(self.value[1:])
 
     def cons(self, other):
         if type(other) != SymbolExpression:
             raise TypeError(CONS, "String", type(other))
-        return SymbolExpression(repr(other) + self.value, self.environment)
+        return SymbolExpression(repr(other) + self.value)
 
     def __repr__(self):
         return self.value
 
 class NumberExpression(LispExpression):
     """A number"""
-    def __init__(self, value, parent_environment):
+    def __init__(self, value):
         if type(value) in {int, float}:
-            super(NumberExpression, self).__init__(value, parent_environment)
+            super(NumberExpression, self).__init__(value)
         else:
             try:
-                super(NumberExpression, self).__init__(int(value), parent_environment)
+                super(NumberExpression, self).__init__(int(value))
             except ValueError:
-                super(NumberExpression, self).__init__(float(value), parent_environment)
+                super(NumberExpression, self).__init__(float(value))
             except ValueError:
                 raise BadInputError("number", value)
 
     def subtract(self, other):
         """Return the difference between this number and another"""
-        return NumberExpression(self.value - other.value, self.environment)
+        return NumberExpression(self.value - other.value)
 
     def lessthan(self, other):
         """Return 1 iff this value is less than the other otherwise 0"""
-        return Nils.nought if type(other) == NumberExpression and self.value >= other.value else NumberExpression(1, self.environment)
+        return Nils.nought if type(other) == NumberExpression and self.value >= other.value else NumberExpression(1)
             
     def evaluate(self, environment):
         """Return 'autoquote'"""
@@ -99,8 +98,8 @@ class NumberExpression(LispExpression):
 
 class ApplicableLispExpression(LispExpression):
     """A lisp expression which can be applied to a set of arguements"""
-    def __init__(self, value, parent_environment):
-        super(ApplicableLispExpression, self).__init__(value, parent_environment)
+    def __init__(self, value):
+        super(ApplicableLispExpression, self).__init__(value)
         if len(value) != 2:
             raise WrongNumParamsError(type(self), 2, len(value))
         assert type(value[0]) == ListExpression
@@ -115,16 +114,15 @@ class ApplicableLispExpression(LispExpression):
 
 class LispFunction(ApplicableLispExpression):
     """A lisp function"""
-    def __init__(self, name, definition, parent_environment):
-        super(LispFunction, self).__init__([Nils.nil,definition], parent_environment)
+    def __init__(self, name, definition):
+        super(LispFunction, self).__init__([Nils.nil,definition])
         self.name = name
         
     def apply_to(self, args, environment):
         return self.body(args.value, environment)
 
     def evaluate(self, environment):
-        """To be applied, not evaluated"""
-        raise CannotEvaluateError(self)
+        return self
 
     def __repr__(self):
         return "<builtin {} function>".format(self.name)
@@ -132,7 +130,8 @@ class LispFunction(ApplicableLispExpression):
 class LambdaExpression(ApplicableLispExpression):
     """An anonymous function definition"""
     def __init__(self, value, parent_environment):
-        super(LambdaExpression, self).__init__(value, parent_environment)
+        super(LambdaExpression, self).__init__(value)
+        self.environment = parent_environment
 
     def __repr__(self):
         return "(lambda ({}) {})".format(
@@ -145,11 +144,10 @@ class LambdaExpression(ApplicableLispExpression):
 
     def apply_to(self, arguments, environment):
         # Arguments are evaluated first
-        environment.interpreter.print_debug("Evaluating {} with arguments: {}", self, arguments)
         arguments = ListExpression(
-            [argument.evaluate(environment) for argument in arguments.value], environment)
-
-        if len(arguments) < self.num_params:
+            [argument.evaluate(environment) for argument in arguments.value])
+        environment.interpreter.print_debug("Evaluating {} with arguments: {}", self, arguments)
+        if len(arguments.value) < self.num_params:
             raise(WrongNumParamsError(LAMBDA, self.num_params, len(arguments)))
         
         # Create a closure to apply the lambda in
@@ -160,12 +158,15 @@ class LambdaExpression(ApplicableLispExpression):
 
         environment.interpreter.print_debug("Created temp env: \n{}", closure)
         
-        return self.body.evaluate(closure)
+        result = self.body.evaluate(closure)
+        environment.interpreter.print_debug("Evaluated {} with arguments: {} to {}", self, arguments, result)
+        return result
+
 
 class MacroExpression(ApplicableLispExpression):
     """A macro"""
-    def __init__(self, value, parent_environment, name):
-        super(MacroExpression, self).__init__(value, parent_environment)
+    def __init__(self, value, name):
+        super(MacroExpression, self).__init__(value)
         # Name is kept for debugging purposes
         self.name = name
         # Need to extract any keyword arguments
@@ -182,11 +183,10 @@ class MacroExpression(ApplicableLispExpression):
                 break
 
     def evaluate(self, environment):
-        """To be applied, not evaluated"""
-        raise CannotEvaluateError(self)
+        return self
 
     def __repr__(self):
-        return "(macro ({}) ({}))".format(
+        return "(macro {} ({}) ({}))".format(self.name,
             " ".join([repr(p) for p in self.params] + ([repr(self.variable_param)] if self.variable_param else [])),
             self.body
         )
@@ -202,22 +202,22 @@ class MacroExpression(ApplicableLispExpression):
             # Put any extra parameters into the variable parameter
             env.define(
                 self.variable_param,
-                ListExpression(arguments.value[self.num_params:], environment))
+                ListExpression(arguments.value[self.num_params:]))
         # Evaluate the macro to get code to interpret, then interpret that code
         # Expand in a child environment of the one passed
         environment.interpreter.print_macroexpansion(
-            "MACROEXPANDING {}", ListExpression([self.name] + arguments.value, None))
+            "MACROEXPANDING {}", ListExpression([self.name] + arguments.value))
         macro_expansion = self.body.evaluate(env)
         environment.interpreter.print_macroexpansion(
-            "MACROEXPANSION of {}:\n\t{}", ListExpression([self.name] + arguments.value, None), macro_expansion)
+            "MACROEXPANSION of {}:\n\t{}", ListExpression([self.name] + arguments.value), macro_expansion)
         # Interpret in the passed environment
         return macro_expansion.evaluate(environment)
     
 class ListExpression(LispExpression):
     """A List"""
-    def __init__(self, input_list, parent_environment):
+    def __init__(self, input_list):
         assert(type(input_list) == list)
-        super(ListExpression, self).__init__(input_list, parent_environment)
+        super(ListExpression, self).__init__(input_list)
 
     def car(self):
         """First item in list"""
@@ -228,23 +228,23 @@ class ListExpression(LispExpression):
 
     def cdr(self):
         """Everything but first item in list"""
-        return ListExpression(self.value[1:], self.environment)
+        return ListExpression(self.value[1:])
 
     def cons(self, other):
         """Append an item to the front of this list"""
-        return ListExpression([other] + self.value, self.environment)
+        return ListExpression([other] + self.value)
         
     def evaluate(self, environment):
         """Apply the first item of the list to the rest of the list"""
-        environment.interpreter.print_debug(
-            "--evaluating: {} in environment: \n{}\n", self, environment)
+        #environment.interpreter.print_debug(
+        #    "--evaluating: {} in environment: \n{}\n", self, environment)
         if len(self.value) == 0:
             return self
         else:
             # Get the first item and invoke it on the  rest
             fn = self.value[0].evaluate(environment)
             if issubclass(type(fn), ApplicableLispExpression):
-                return fn.apply_to(ListExpression(self.value[1:], environment), environment)
+                return fn.apply_to(ListExpression(self.value[1:]), environment)
             else:
                 raise NotAFunctionError(fn)
 
@@ -260,7 +260,7 @@ class ListExpression(LispExpression):
 
 class Nils(object):
     """All representations of False"""
-    nil = ListExpression([], None)
-    nought = NumberExpression(0, None)
-    null = SymbolExpression("", None)
+    nil = ListExpression([])
+    nought = NumberExpression(0)
+    null = SymbolExpression("")
     nils = [nil, nought, null]
