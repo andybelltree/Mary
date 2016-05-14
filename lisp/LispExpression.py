@@ -48,7 +48,7 @@ class SymbolExpression(LispExpression):
 
     def lessthan(self, other):
         """Return 't iff this value is lexically less than the other otherwise ()"""
-        return Nils.null if type(other) == SymbolExpression and self.value >= other.value else self.value
+        return Nils.null if type(other) == SymbolExpression and self.value >= other.value else self
 
     def car(self):
         """Return the first character of this symbol"""
@@ -103,10 +103,10 @@ class ApplicableLispExpression(LispExpression):
         super(ApplicableLispExpression, self).__init__(value, parent_environment)
         if len(value) != 2:
             raise WrongNumParamsError(type(self), 2, len(value))
-        self.params = value[0]
-        if type(self.params) == ListExpression:
-            self.params = self.params.value
+        assert type(value[0]) == ListExpression
+        self.params = value[0].value
         self.body = value[1]
+        self.num_params = len(self.params)
 
     @abstractmethod
     def apply_to(self, arguments, environment):
@@ -116,7 +116,7 @@ class ApplicableLispExpression(LispExpression):
 class LispFunction(ApplicableLispExpression):
     """A lisp function"""
     def __init__(self, name, definition, parent_environment):
-        super(LispFunction, self).__init__([["args"],definition], parent_environment)
+        super(LispFunction, self).__init__([Nils.nil,definition], parent_environment)
         self.name = name
         
     def apply_to(self, args, environment):
@@ -149,13 +149,13 @@ class LambdaExpression(ApplicableLispExpression):
         arguments = ListExpression(
             [argument.evaluate(environment) for argument in arguments.value], environment)
 
-        if len(arguments) < len(self.params):
-            raise(WrongNumParamsError(LAMBDA, len(self.params), len(arguments)))
+        if len(arguments) < self.num_params:
+            raise(WrongNumParamsError(LAMBDA, self.num_params, len(arguments)))
         
         # Create a closure to apply the lambda in
         closure = self.environment.create_child()
 
-        for i in range(len(self.params)):
+        for i in range(self.num_params):
             closure.define(self.params[i], arguments.value[i])
 
         environment.interpreter.print_debug("Created temp env: \n{}", closure)
@@ -170,14 +170,15 @@ class MacroExpression(ApplicableLispExpression):
         self.name = name
         # Need to extract any keyword arguments
         self.variable_param = None
-        for i in range(len(self.params)):
+        for i in range(self.num_params):
             if self.params[i].value == "&rest":
-                if i + 2 > len(self.params):
+                if i + 2 > self.num_params:
                     raise KeywordError(self.params[i], "Must be followed by a parameter")
                 self.variable_param = self.params[i + 1]
                 # Remove the keyword and variable parameter from the list of parameters
                 self.params.pop(i)
                 self.params.pop(i)
+                self.num_params -= 2
                 break
 
     def evaluate(self, environment):
@@ -186,22 +187,22 @@ class MacroExpression(ApplicableLispExpression):
 
     def __repr__(self):
         return "(macro ({}) ({}))".format(
-            " ".join([repr(p) for p in self.params] + ([self.variable_param] if self.variable_param else [])),
-            " ".join([repr(l) for l in self.body])
+            " ".join([repr(p) for p in self.params] + ([repr(self.variable_param)] if self.variable_param else [])),
+            self.body
         )
 
     def apply_to(self, arguments, environment):
         # Create an environment to apply the macro in
         env = environment.create_child()
-        if len(arguments.value) < len(self.params):
-            raise(WrongNumParamsError(self, len(self.params), len(arguments)))
-        for i in range(len(self.params)):
+        if len(arguments.value) < self.num_params:
+            raise(WrongNumParamsError(self, self.num_params, len(arguments)))
+        for i in range(self.num_params):
             env.define(self.params[i], arguments.value[i])
         if self.variable_param:
             # Put any extra parameters into the variable parameter
             env.define(
                 self.variable_param,
-                ListExpression(arguments.value[len(self.params):], environment))
+                ListExpression(arguments.value[self.num_params:], environment))
         # Evaluate the macro to get code to interpret, then interpret that code
         # Expand in a child environment of the one passed
         environment.interpreter.print_macroexpansion(

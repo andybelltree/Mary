@@ -127,10 +127,19 @@ class DefaultEnvironment(Environment):
                 # if you have an atom or an empty list, just return
                 if args.atom() or args.is_empty():
                     return make_list(args)
-                elif tagged(args, UNQUOTE):
+                elif tagged(args, UNQUOTE):                    
                     # If you see a comma, begin evaluation again, then put it in a list
                     result = quasiquote_expand(tagged_data(args), backquotes-1)
-                    return make_list(result if backquotes == 1 else tag(UNQUOTE, result.car()))
+
+                    # Special case: The layer below is a splice, which means this comma
+                    # needs to be applied to each item in the resulting list.
+                    # From Bawden "Intuitively, an atsign has the eect of causing the
+                    # comma to be mapped over the elements of the value
+                    # of the following expression.
+                    if not tagged_data(args).atom() and tagged(tagged_data(args), SPLICE):
+                        return ListExpression([tag(UNQUOTE, exp) for exp in result.value], env)
+                    else:
+                        return make_list(result if backquotes == 1 else tag(UNQUOTE, result.car()))
                 elif tagged(args, SPLICE):
                     result = quasiquote_expand(tagged_data(args), backquotes-1)
                     return result if backquotes == 1 else make_list(tag(SPLICE, result.car()))
