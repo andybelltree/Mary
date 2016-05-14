@@ -12,6 +12,7 @@ TRANSLATIONS = {
     UNQUOTE:",",
     SPLICE:",@"   
 }
+LAMBDA="lambda"
 
 # Lisp Expression objects
 class LispExpression(metaclass=ABCMeta):
@@ -241,11 +242,12 @@ class ListExpression(LispExpression):
         else:
             # Get the first item and invoke it on the  rest
             fn = self.value[0].evaluate(environment)
-            try:
+            if issubclass(type(fn), ApplicableLispExpression):
                 return fn.apply_to(ListExpression(self.value[1:], environment), environment)
-            except AttributeError:
+            else:
                 raise NotAFunctionError(fn)
 
+            
     def __len__(self):
         return len(self.value)
         

@@ -1,5 +1,6 @@
 from .LispErrors import *
 from .LispExpression import *
+from functools import reduce
 
 LAMBDA = "lambda"
 DEFMACRO = "defmacro"
@@ -116,44 +117,35 @@ class DefaultEnvironment(Environment):
             """Backquote function for quasiquote read macro"""
             if len(args) < 1:
                 raise WrongNumParamsError(QUASIQUOTE, 1, len(args))
-            def quasiquote_expand(args):
-                """Called recursively by quasiquote function
-                Returns expression quasiquoted"""
+            def quasiquote_expand(args, backquotes):
+                """Called recursively by backquote function
+                Returns True or false depending on whether results should be 
+                spliced into upper layer"""
+                # if there as many commas as backquotes encountered, evaluate the expression
+                if backquotes == 0:
+                    return args.evaluate(env)
+                # if you have an atom or an empty list, just return
                 if args.atom() or args.is_empty():
-                    return quote(args)
+                    return make_list(args)
                 elif tagged(args, UNQUOTE):
-                    # If you see a comma, begin evaluation again
-                    return tagged_data(args)
+                    # If you see a comma, begin evaluation again, then put it in a list
+                    result = quasiquote_expand(tagged_data(args), backquotes-1)
+                    return make_list(result if backquotes == 1 else tag(UNQUOTE, result.car()))
                 elif tagged(args, SPLICE):
-                    # Bad placement of a splice
-                    raise KeywordError(",@","Must be used inside a list")
+                    result = quasiquote_expand(tagged_data(args), backquotes-1)
+                    return result if backquotes == 1 else make_list(tag(SPLICE, result.car()))
                 elif tagged(args, QUASIQUOTE):
-                    # Nested back quotes.
-                    return quasiquote_expand(quasiquote_expand(tagged_data(args)))
+                    # Nested back quotes? We're going deeper. Count it up
+                    return make_list(tag(QUASIQUOTE, quasiquote_expand(
+                        tagged_data(args), backquotes+1).car()))
                 else:
-                    # Expand the first item of the list and append to the rest
-                    first = [exp.evaluate(env) for exp in quasiquote_list_expand(args.car()).value]
-                    rest = quasiquote_expand(args.cdr()).evaluate(env).value
-                    return quote(ListExpression(first + rest, env))
+                    return make_list(
+                        ListExpression(
+                            reduce(lambda x,y: x+quasiquote_expand(y, backquotes).value,
+                                   args.value,
+                                   []),
+                            env))
 
-            def quasiquote_list_expand(args):
-                """Expands into a list. Called by quasiquote_expand."""
-                if args.atom() or args.is_empty():
-                    return ListExpression([quote(args)], env)
-                if tagged(args, UNQUOTE):
-                    # If you see a comma, begin evaluation again. Put inside a list
-                    return ListExpression([tagged_data(args)], env)
-                elif tagged(args, SPLICE):
-                    # Don't put this inside a list so it gets spliced in
-                    return ListExpression([quote(exp) for exp in tagged_data(args).value], env)
-                elif tagged(args, QUASIQUOTE):
-                    return quasiquote_list_expand(quasiquote_expand(tagged_data(args)))
-                else:
-                    # Put inside a list expression
-                    first = [exp.evaluate(env) for exp in quasiquote_list_expand(args.car()).value]
-                    rest = quasiquote_expand(args.cdr()).evaluate(env).value
-                    return ListExpression(
-                        [quote(ListExpression(first + rest, env))], env)
 
             def tagged(args, tag):
                 """True iff data has given tag"""
@@ -163,11 +155,15 @@ class DefaultEnvironment(Environment):
                 """Returns the tagged data"""
                 return args.cdr().car()
                 
-            def quote(args):
-                """Adds a quote to the argument"""
-                return ListExpression([SymbolExpression(QUOTE, env), args], env)
+            def tag(tag, args):
+                """Adds a tag to the argument"""
+                return ListExpression([SymbolExpression(tag, env), args], env)
 
-            return quasiquote_expand(args[0]).evaluate(env)
+            def make_list(args):
+                """Turns argument into a list"""
+                return ListExpression([args], env)
+
+            return quasiquote_expand(args[0], 1).car()
 
 
         self.define(SymbolExpression(QUASIQUOTE, self), LispFunction(QUASIQUOTE, quasiquote, self))
