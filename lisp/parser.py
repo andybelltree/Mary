@@ -47,19 +47,19 @@ class Parser(object):
             raise SyntaxError('Expected EOF')
         if len(exp) > 1 and exp[:2] in self._syntax:
             return ListExpression([SymbolExpression(
-                self._syntax[exp[:2]], None), self._parse(exp[2:])], None)
+                self._syntax[exp[:2]]), self._parse(exp[2:])])
         elif exp[0] in self._syntax:
             return ListExpression([SymbolExpression(
-                self._syntax[exp[0]], None), self._parse(exp[1:])], None)
+                self._syntax[exp[0]]), self._parse(exp[1:])])
         elif exp[0] == "(":
             end = self._find_matching_paren(exp)
-            return ListExpression([self._parse(e) for e in self._split_exps(exp[1:end])], None)
+            return ListExpression([self._parse(e) for e in self._split_exps(exp[1:end])])
         else:
             try:
                 float(exp)
-                return NumberExpression(exp, None)
+                return NumberExpression(exp)
             except ValueError:
-                return SymbolExpression(exp, None)
+                return SymbolExpression(exp)
             return exp
 
     def _parse_multiple(self, source):
@@ -113,35 +113,6 @@ class Parser(object):
             elif source[pos] == ')':
                 open_brackets -= 1
         return pos
-
-    def _quasiquote(self, source):
-        if source == "()":
-            return Nils.nil
-        elif source[0] == "(":
-            end = self._find_matching_paren(source)
-            if source[1] == UNQUOTE:
-                exp, rest = self._partition_exp(source[2:end])
-                exp = self._parse(exp, env)
-            else:
-                exp, rest = self._partition_exp(source[1:end])
-                if exp[0] == "(":
-                    exp = self._quasiquote(exp, env)
-                else:
-                    exp = ListExpression([SymbolExpression("quote", env), self._quasiquote(exp, env)], env)
-            rest = self._quasiquote("(" + rest.strip() + ")", env)
-            return ListExpression([SymbolExpression("cons", env), exp, rest], env)
-        elif source[0] == UNQUOTE:
-            # Just parse the expression
-            return self._parse(source[1:], env)
-        elif source[0] == QUOTE_SYM:
-            return ListExpression([SymbolExpression(QUOTE, env), self._quasiquote(source[1:], env)], env)
-        elif source[0] == QUASIQUOTE:
-            return ListExpression(
-                [SymbolExpression(QUOTE, env),
-                 ListExpression([
-                    SymbolExpression(QUOTE, env), self._quasiquote(source[1:], env)], env)], env)
-        else:
-            return SymbolExpression(source, env)
 
 
     def result(self):
