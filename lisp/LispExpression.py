@@ -144,11 +144,10 @@ class LambdaExpression(ApplicableLispExpression):
 
     def apply_to(self, arguments, environment):
         # Arguments are evaluated first
-        environment.interpreter.print_debug("Evaluating {} with arguments: {}", self, arguments)
         arguments = ListExpression(
             [argument.evaluate(environment) for argument in arguments.value])
-
-        if len(arguments) < self.num_params:
+        environment.interpreter.print_debug("Evaluating {} with arguments: {}", self, arguments)
+        if len(arguments.value) < self.num_params:
             raise(WrongNumParamsError(LAMBDA, self.num_params, len(arguments)))
         
         # Create a closure to apply the lambda in
@@ -159,7 +158,10 @@ class LambdaExpression(ApplicableLispExpression):
 
         environment.interpreter.print_debug("Created temp env: \n{}", closure)
         
-        return self.body.evaluate(closure)
+        result = self.body.evaluate(closure)
+        environment.interpreter.print_debug("Evaluated {} with arguments: {} to {}", self, arguments, result)
+        return result
+
 
 class MacroExpression(ApplicableLispExpression):
     """A macro"""
@@ -184,7 +186,7 @@ class MacroExpression(ApplicableLispExpression):
         return self
 
     def __repr__(self):
-        return "(macro ({}) ({}))".format(
+        return "(macro {} ({}) ({}))".format(self.name,
             " ".join([repr(p) for p in self.params] + ([repr(self.variable_param)] if self.variable_param else [])),
             self.body
         )
@@ -234,8 +236,8 @@ class ListExpression(LispExpression):
         
     def evaluate(self, environment):
         """Apply the first item of the list to the rest of the list"""
-        environment.interpreter.print_debug(
-            "--evaluating: {} in environment: \n{}\n", self, environment)
+        #environment.interpreter.print_debug(
+        #    "--evaluating: {} in environment: \n{}\n", self, environment)
         if len(self.value) == 0:
             return self
         else:

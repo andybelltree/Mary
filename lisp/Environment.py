@@ -1,6 +1,7 @@
 from .LispErrors import *
 from .LispExpression import *
 from functools import reduce
+import sys
 
 LAMBDA = "lambda"
 DEFMACRO = "defmacro"
