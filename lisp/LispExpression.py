@@ -102,7 +102,10 @@ class ApplicableLispExpression(LispExpression):
         super(ApplicableLispExpression, self).__init__(value)
         if len(value) != 2:
             raise WrongNumParamsError(type(self), 2, len(value))
-        assert type(value[0]) == ListExpression
+        try:
+            assert type(value[0]) == ListExpression
+        except AssertionError:
+            raise TypeError(LAMBDA, value[0], ListExpression)
         self.params = value[0].value
         self.body = value[1]
         self.num_params = len(self.params)
