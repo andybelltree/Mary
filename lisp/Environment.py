@@ -120,42 +120,54 @@ class DefaultEnvironment(Environment):
                 """Called recursively by quasiquote function
                 Returns expression quasiquoted"""
                 if args.atom() or args.is_empty():
-                    return args
-                elif args.value[0].value == UNQUOTE:
+                    return quote(args)
+                elif tagged(args, UNQUOTE):
                     # If you see a comma, begin evaluation again
-                    return args.value[1]
-                elif args.value[0].value == SPLICE:
+                    return tagged_data(args)
+                elif tagged(args, SPLICE):
                     # Bad placement of a splice
                     raise KeywordError(",@","Must be used inside a list")
-                elif args.value[0].value == QUASIQUOTE:
+                elif tagged(args, QUASIQUOTE):
                     # Nested back quotes.
-                    return quasiquote_expand(quasiquote_expand(args.value[1]))
-                elif type(args) == ListExpression and not args.is_empty():
+                    return quasiquote_expand(quasiquote_expand(tagged_data(args)))
+                else:
                     # Expand the first item of the list and append to the rest
-                    first = quasiquote_list_expand(args.car()).value
-                    rest = quasiquote_expand(args.cdr()).value
-                    return ListExpression(first + rest, env)
+                    first = [exp.evaluate(env) for exp in quasiquote_list_expand(args.car()).value]
+                    rest = quasiquote_expand(args.cdr()).evaluate(env).value
+                    return quote(ListExpression(first + rest, env))
 
             def quasiquote_list_expand(args):
                 """Expands into a list. Called by quasiquote_expand."""
                 if args.atom() or args.is_empty():
-                    return ListExpression([args], env)
-                if args.value[0].value == UNQUOTE:
+                    return ListExpression([quote(args)], env)
+                if tagged(args, UNQUOTE):
                     # If you see a comma, begin evaluation again. Put inside a list
-                    return ListExpression([args.value[1].evaluate(env)], env)
-                elif args.value[0].value == SPLICE:
+                    return ListExpression([tagged_data(args)], env)
+                elif tagged(args, SPLICE):
                     # Don't put this inside a list so it gets spliced in
-                    return args.value[1].evaluate(env)
-                elif args.value[0].value == QUASIQUOTE:
-                    return quasiquote_list_expand(quasiquote_expand(args.value[1]))
-                elif type(args) == ListExpression and not args.is_empty():
+                    return ListExpression([quote(exp) for exp in tagged_data(args).value], env)
+                elif tagged(args, QUASIQUOTE):
+                    return quasiquote_list_expand(quasiquote_expand(tagged_data(args)))
+                else:
                     # Put inside a list expression
-                    first = quasiquote_list_expand(args.car()).value
-                    rest = quasiquote_expand(args.cdr()).value
+                    first = [exp.evaluate(env) for exp in quasiquote_list_expand(args.car()).value]
+                    rest = quasiquote_expand(args.cdr()).evaluate(env).value
                     return ListExpression(
-                        [ListExpression(first + rest, env)], env)
+                        [quote(ListExpression(first + rest, env))], env)
 
-            return quasiquote_expand(args[0])
+            def tagged(args, tag):
+                """True iff data has given tag"""
+                return args.value[0].value == tag
+
+            def tagged_data(args):
+                """Returns the tagged data"""
+                return args.cdr().car()
+                
+            def quote(args):
+                """Adds a quote to the argument"""
+                return ListExpression([SymbolExpression(QUOTE, env), args], env)
+
+            return quasiquote_expand(args[0]).evaluate(env)
 
 
         self.define(SymbolExpression(QUASIQUOTE, self), LispFunction(QUASIQUOTE, quasiquote, self))
