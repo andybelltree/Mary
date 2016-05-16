@@ -438,9 +438,9 @@
 
 ;; Nieve approach to fibonacci. Slow but doesn't hit max recursion depth till over 15. Too slow to bother after that anyway.
 
-(defun nieve_fib (n)
+(defun nievefib (n)
   (if (or (eq? n 0) (eq? n 1)) 1
-      (+ (nieve_fib (- n 1)) (nieve_fib (- n 2)))
+      (+ (nievefib (- n 1)) (nievefib (- n 2)))
       )
   )
 
@@ -448,7 +448,7 @@
 (defun fibiter (n)
   (reverse
   (let ((x 0) (f1 0) (f2 1) (nums '(1)) (n (-- n)))
-    (do ((x (++ x)) (f3 (+ f1 f2)) (nums (cons f3 nums)) (f1 f2) (f2 f3)) (< x n) nums)
+    (do ((x (++ x)) (f3 (+ f1 f2)) (nums (cons f3 nums)) (f1 f2) (f2 f3)) (< x (++ n)) nums)
     )
   )
   )
@@ -466,7 +466,7 @@
   )
 
 ;; Just the last value in fibonacci series found recursively. Same limitations as above
-(defun fibrec_1 (n)
+(defun fib (n)
   (car (fibrec_r n))
   )
 
