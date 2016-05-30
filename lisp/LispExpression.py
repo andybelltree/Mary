@@ -19,6 +19,7 @@ class LispExpression(metaclass=ABCMeta):
     """A generic Lisp Expression"""
     def __init__(self, value):
         self.value = value
+        self.parent = None
 
     @abstractmethod
     def evaluate(self, environment):
@@ -35,6 +36,13 @@ class LispExpression(metaclass=ABCMeta):
 
     def atom(self):
         return type(self) in {NumberExpression, SymbolExpression}
+
+    def eval_history(self):
+        return [self] if not self.parent else self.parent.eval_history() + [self]
+
+    def with_parent(self, parent):
+        self.parent = parent
+        return self
 
 class SymbolExpression(LispExpression):
     """A symbol"""
@@ -111,7 +119,7 @@ class ApplicableLispExpression(LispExpression):
         self.num_params = len(self.params)
 
     @abstractmethod
-    def apply_to(self, arguments, environment):
+    def apply_to(self, arguments, environment, parent):
         """Apply expression to arguments"""
         raise NotImplementedError
 
@@ -121,8 +129,8 @@ class LispFunction(ApplicableLispExpression):
         super(LispFunction, self).__init__([Nils.nil,definition])
         self.name = name
         
-    def apply_to(self, args, environment):
-        return self.body(args.value, environment)
+    def apply_to(self, args, environment, parent):
+        return self.body(args.value, environment, parent)
 
     def evaluate(self, environment):
         return self
@@ -145,7 +153,8 @@ class LambdaExpression(ApplicableLispExpression):
     def evaluate(self, environment):
         return self
 
-    def apply_to(self, arguments, environment):
+    def apply_to(self, arguments, environment, parent):
+        self.parent = parent
         # Arguments are evaluated first
         arguments = ListExpression(
             [argument.evaluate(environment) for argument in arguments.value])
@@ -163,7 +172,7 @@ class LambdaExpression(ApplicableLispExpression):
         
         result = self.body.evaluate(closure)
         environment.interpreter.print_debug("Evaluated {} with arguments: {} to {}", self, arguments, result)
-        return result
+        return result.with_parent(self)
 
 
 class MacroExpression(ApplicableLispExpression):
@@ -194,7 +203,8 @@ class MacroExpression(ApplicableLispExpression):
             self.body
         )
 
-    def apply_to(self, arguments, environment):
+    def apply_to(self, arguments, environment, parent):
+        self.parent = parent
         # Create an environment to apply the macro in
         env = environment.create_child()
         if len(arguments.value) < self.num_params:
@@ -210,11 +220,11 @@ class MacroExpression(ApplicableLispExpression):
         # Expand in a child environment of the one passed
         environment.interpreter.print_macroexpansion(
             "MACROEXPANDING {}", ListExpression([self.name] + arguments.value))
-        macro_expansion = self.body.evaluate(env)
+        macro_expansion = self.body.evaluate(env).with_parent(self)
         environment.interpreter.print_macroexpansion(
             "MACROEXPANSION of {}:\n\t{}", ListExpression([self.name] + arguments.value), macro_expansion)
         # Interpret in the passed environment
-        return macro_expansion.evaluate(environment)
+        return macro_expansion.evaluate(environment).with_parent(macro_expansion)
     
 class ListExpression(LispExpression):
     """A List"""
@@ -247,7 +257,7 @@ class ListExpression(LispExpression):
             # Get the first item and invoke it on the  rest
             fn = self.value[0].evaluate(environment)
             if issubclass(type(fn), ApplicableLispExpression):
-                return fn.apply_to(ListExpression(self.value[1:]), environment)
+                return fn.apply_to(ListExpression(self.value[1:]), environment, self)
             else:
                 raise NotAFunctionError(fn)
 
