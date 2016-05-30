@@ -4,17 +4,19 @@
 ;;      )
 ;;   )
 
+(defmacro defun (name params &rest body) ; defun macro
+  `(defmacro ,name ,params
+     `((lambda ,',params ,',@body) ,,@params)
+     )
+  )
+
 (defmacro list (&rest alist)
   (if alist
       `(cons ,(car alist) (list ,@(cdr alist)))
       )
   )
 
-(defmacro defun (name params &rest body) ; defun macro
-  `(defmacro ,name ,params
-     `((lambda ,',params ,',@body) ,,@params)
-     )
-  )
+
 
 
 (defun cadr (l)
@@ -277,7 +279,7 @@
 
 (defun / (x y)
   (if (< (- (abs x) (abs y)) 0)
-      (if (samesign x y) 0 -1)
+      (if (or (eq? x 0) (samesign x y)) 0 -1)
       (if (samesign x y)	    
 	  (++ (/ (- x y) y))
 	  (-- (/ (+ x y) y))
@@ -448,7 +450,10 @@
 (defun fibiter (n)
   (reverse
   (let ((x 0) (f1 0) (f2 1) (nums '(1)) (n (-- n)))
-    (do ((x (++ x)) (f3 (+ f1 f2)) (nums (cons f3 nums)) (f1 f2) (f2 f3)) (< x (++ n)) nums)
+    (do
+     ((x (++ x)) (f3 (+ f1 f2)) (nums (cons f3 nums)) (f1 f2) (f2 f3))
+     (< x (++ n))
+     nums)
     )
   )
   )

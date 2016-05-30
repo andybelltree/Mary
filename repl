@@ -3,15 +3,19 @@
 from util import *
 from lisp.interpreter import Interpreter
 from os.path import dirname, join
-
+import sys
 import argparse
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', help='get debug output', action='store_true', default=False)
 parser.add_argument('-m', help='get macroexpansion output', action='store_true', default=False)
 parser.add_argument('-c', help='clear environment. Don\'t read in stdlib first', action='store_true', default=False)
 parser.add_argument('-e', help='get verbose error reporting', action='store_true', default=False)
+parser.add_argument('-r', help='set recursion depth of python', type=int, default=1000)
 
 args = parser.parse_args()
+sys.setrecursionlimit(args.r)
 
 interpr = Interpreter(args.d, args.m)
 if not args.c:
