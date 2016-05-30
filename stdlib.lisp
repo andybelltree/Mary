@@ -357,6 +357,10 @@
  `(print 't ,@params)
  )
 
+(defun printlist (words)
+  (if words (progn (printsym (car words)) (printspace) (printlist (cdr words))))
+  )
+
 ;; Print symbols without a newline at the end
 (defmacro write (&rest params)
 `(print () ,@params)

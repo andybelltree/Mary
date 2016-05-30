@@ -91,12 +91,12 @@ class DefaultEnvironment(Environment):
 
     def _define_defmacro(self):
         """Defines the defmacro function"""
-        def defmacro(args, env, parent):
+        def defmacro(args, env):
             if len(args) < 3:
                 raise WrongNumParamsError(DEFMACRO, 3, len(args))
             else:
                 env.define(
-                    args[0], MacroExpression(args[1:], args[0]).with_parent(parent))
+                    args[0], MacroExpression(args[1:], args[0]))
                 return args[0]
         self.define(SymbolExpression(DEFMACRO), LispFunction(DEFMACRO, defmacro))
 
@@ -104,18 +104,18 @@ class DefaultEnvironment(Environment):
         """Defines the lambda function"""
         self.define(SymbolExpression(LAMBDA), LispFunction(
             LAMBDA,
-            lambda args, env, parent : LambdaExpression(args, env).with_parent(parent)))
+            lambda args, env : LambdaExpression(args, env)))
 
     def _define_quote(self):
         """Defines the quote function"""
-        def quote(args, env, parent):
-            return args[0].with_parent(parent)
+        def quote(args, env):
+            return args[0]
         self.define(SymbolExpression(QUOTE), LispFunction(QUOTE, quote))
 
 
     def _define_quasiquote(self):
         """Defines backquote"""
-        def quasiquote(args, env, parent):
+        def quasiquote(args, env):
             """Backquote function for quasiquote read macro"""
             if len(args) < 1:
                 raise WrongNumParamsError(QUASIQUOTE, 1, len(args))
@@ -173,7 +173,7 @@ class DefaultEnvironment(Environment):
                 """Turns argument into a list"""
                 return ListExpression([args])
 
-            return quasiquote_expand(args[0], 1).car().with_parent(parent)
+            return quasiquote_expand(args[0], 1).car()
 
 
         self.define(SymbolExpression(QUASIQUOTE), LispFunction(QUASIQUOTE, quasiquote))
@@ -181,7 +181,7 @@ class DefaultEnvironment(Environment):
         
     def _define_if(self):
         """Defines the if 'function'"""
-        def if_ex(args, env, parent):
+        def if_ex(args, env):
             if len(args) < 2:
                 raise WrongNumParamsError(IF, 2, len(args))
             else:
@@ -193,29 +193,30 @@ class DefaultEnvironment(Environment):
                         result = Nils.nil
                 else:
                     result = args[1].evaluate(env)
-                return result.with_parent(parent)
+                return result
         self.define(SymbolExpression(IF), LispFunction(IF, if_ex))
 
     def _define_atom(self):
         """Defines the atom function. True if argument is an atom, else ()"""
-        def atom(args, env, parent):
+        def atom(args, env):
             if len(args) < 1:
                 raise WrongNumParamsError(ATOM, 1, len(args))
             else:
                 arg = args[0].evaluate(env)
-                return (arg if arg.atom() else Nils.nil).with_parent(parent)
+                return (arg if arg.atom() else Nils.nil)
         self.define(
             SymbolExpression(ATOM), LispFunction(
                 ATOM, atom))
 
     def _define_car(self):
         """Defines the car function"""
-        def car(args, env, parent):
+        def car(args, env):
             if len(args) < 1:
                 raise WrongNumParamsError(CAR, 1, len(args))
             exp = args[0].evaluate(env)
+            
             try:
-                return exp.car().with_parent(parent)
+                return exp.car()
             except AttributeError:
                 raise TypeError(CAR, exp, "List or Symbol")
 
@@ -223,25 +224,26 @@ class DefaultEnvironment(Environment):
 
     def _define_cdr(self):
         """Defines the cdr function"""
-        def cdr(args, env, parent):
+        def cdr(args, env):
             if len(args) < 1:
                 raise WrongNumParamsError(CDR, 1, len(args))
             exp = args[0].evaluate(env)
+            intermediate = ListExpression([SymbolExpression(CDR), exp])
             try:
-                return exp.cdr().with_parent(parent)
+                return exp.cdr()
             except AttributeError:
                 raise TypeError(CDR, exp, "List or Symbol")
         self.define(SymbolExpression(CDR), LispFunction(CDR, cdr))
 
     def _define_cons(self):
         """Defines the cons function"""
-        def cons(args, env, parent):
+        def cons(args, env):
             if len(args) < 2:
                 raise WrongNumParamsError(CONS, 2, len(args))
             expr1 = args[0].evaluate(env)
             expr2 = args[1].evaluate(env)
             try:
-                return expr2.cons(expr1).with_parent(parent)
+                return expr2.cons(expr1)
             except AttributeError:
                 raise TypeError(CONS, exp_2, "List or Symbol")
                 
@@ -249,7 +251,7 @@ class DefaultEnvironment(Environment):
 
     def _define_subtract(self):
         """Defines the subtract function"""        
-        def subtract(args, env, parent):
+        def subtract(args, env):
             if len(args) < 2:
                 raise WrongNumParamsError(SUBTRACT, 2, len(args))
             expr1 = args[0].evaluate(env)
@@ -257,18 +259,18 @@ class DefaultEnvironment(Environment):
             if not type(expr1) == type(expr2) == NumberExpression:
                 raise TypeError(SUBTRACT, "{} and {}".format(expr1, expr2), "Numbers")
             else:
-                return expr1.subtract(expr2).with_parent(parent)
+                return expr1.subtract(expr2)
         self.define(SymbolExpression(SUBTRACT), LispFunction(SUBTRACT, subtract))
 
     def _define_lessthan(self):
         """Defines the less than function"""        
-        def lessthan(args, env, parent):
+        def lessthan(args, env):
             if len(args) < 2:
                 raise WrongNumParamsError(LESSTHAN, 2, len(args))
             expr1 = args[0].evaluate(env)
             expr2 = args[1].evaluate(env)
             try:
-                return expr1.lessthan(expr2).with_parent(parent)
+                return expr1.lessthan(expr2)
             except AttributeError:
                 raise TypeError(LESSTHAN, "{} and {}".format(expr1, expr2), "Numbers or symbols")
 
@@ -276,7 +278,7 @@ class DefaultEnvironment(Environment):
 
     def _define_print_sym(self):
         """Defines print function"""
-        def print_sym(args, env, parent):
+        def print_sym(args, env):
             if len(args) < 1:
                 raise WrongNumParamsError(PRINT, 1, len(args))
             # Add any newline characters (\n) or spaces (\s)
@@ -287,7 +289,7 @@ class DefaultEnvironment(Environment):
             print_val = print_val.replace("\\n", "\n").replace("\\s", " ")
             print(print_val, end="")
             sys.stdout.flush()
-            return Nils.null.with_parent(parent) # Return an empty string
+            return Nils.null # Return an empty string
         self.define(SymbolExpression(PRINT), LispFunction(PRINT, print_sym))
 
     def _define_input_char(self):
@@ -328,15 +330,15 @@ class DefaultEnvironment(Environment):
             else:
                 print(ch, end="")
             sys.stdout.flush()
-            return SymbolExpression(ch).with_parent(parent)
+            return SymbolExpression(ch)
 
         self.define(SymbolExpression(INPUT_CHAR), LispFunction(INPUT_CHAR, input_char))
 
     def _define_gensym(self):
         """Defines the gensym function to generate a symbol that doesn't yet exist"""
         counter = 0
-        def gensym(args, env, parent):
+        def gensym(args, env):
             nonlocal counter
             counter += 1
-            return SymbolExpression(GENSYM_ESCAPE + str(counter)).with_parent(parent)
+            return SymbolExpression(GENSYM_ESCAPE + str(counter))
         self.define(SymbolExpression(GENSYM), LispFunction(GENSYM, gensym))

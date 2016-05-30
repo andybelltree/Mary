@@ -25,9 +25,7 @@ class Interpreter(object):
     def print_eval_history(self, expr):
         if self.eval_history:
             print("\nEvaluation History:")
-            for i, e in enumerate(expr.eval_history()):
-                print("-" * i + ">{}".format(e))
-
+            expr.print_eval(1)
                 
     def print_macroexpansion(self, format_str, *objects):
         objects = [repr(obj) for obj in objects]
@@ -42,12 +40,12 @@ class Interpreter(object):
             results = []
             for expr in ast:
                 next_result = expr.evaluate(self.env)
-                self.print_eval_history(next_result)
+                self.print_eval_history(expr)
                 # Convert back to list
                 results.append(next_result)
             return results
         else:
             result = ast.evaluate(self.env)
-            self.print_eval_history(result)
+            self.print_eval_history(ast)
             # Convert back to the form we received it in
             return result
