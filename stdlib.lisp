@@ -4,17 +4,19 @@
 ;;      )
 ;;   )
 
+(defmacro defun (name params &rest body) ; defun macro
+  `(defmacro ,name ,params
+     `((lambda ,',params ,',@body) ,,@params)
+     )
+  )
+
 (defmacro list (&rest alist)
   (if alist
       `(cons ,(car alist) (list ,@(cdr alist)))
       )
   )
 
-(defmacro defun (name params &rest body) ; defun macro
-  `(defmacro ,name ,params
-     `((lambda ,',params ,',@body) ,,@params)
-     )
-  )
+
 
 
 (defun cadr (l)
@@ -35,6 +37,14 @@
 
 (defun cadar (l)
   (car (cdr (car l)))
+  )
+
+(defun caadr (l)
+  (car (car (cdr l)))
+  )
+
+(defun cdadr (l)
+  (cdr (car (cdr l)))
   )
 
 
@@ -70,7 +80,7 @@
   )
 
 (defmacro do (bindings test &rest body)
-  `(let ,bindings
+  `(letrec ,bindings
      (let ((result (progn ,@body)))
      (if ,test (do ,bindings ,test ,@body) result))
      )
@@ -106,6 +116,14 @@
 (defmacro let (bindings &rest body)
       `((lambda ,(firsts bindings) (progn ,@body)) ,@(seconds bindings))
       )
+
+(defmacro letrec (bindings &rest body)
+  (if bindings
+      `((lambda (,(caar bindings)) (letrec ,(cdr bindings) ,@body)) ,(cadar bindings))
+      `(progn ,@body)
+      )
+  )
+
 
 
 (defmacro defunv (name params &rest body) ; defun macro allows &rest keyword. WIP
@@ -257,6 +275,57 @@
 	      (- (* x (+ y 1)) x)
 	      )
 	  0)
+      )
+
+(defun / (x y)
+  (if (< (- (abs x) (abs y)) 0)
+      (if (or (eq? x 0) (samesign x y)) 0 -1)
+      (if (samesign x y)	    
+	  (++ (/ (- x y) y))
+	  (-- (/ (+ x y) y))
+      )
+  )
+)
+(defun % (x y)
+  (if (neg y)
+      ;; Special case
+      (if (> x y)
+	  (if (> x 0) (% (+ x y) y) x)
+	  (% (- x y) y)
+	  )
+      (if (< x y)
+	  (if (< x 0) (% (+ x y) y) x)
+	  (% (- x y) y)
+	  )
+      )
+  )
+
+;; True iff positive
+(defun pos (x)
+  (< 0 x)
+  )
+
+;; True iff negative
+(defun neg (x)
+  (< x 0)
+  )
+
+;; Absolute value of x
+(defun abs (x)
+  (if (< x 0) (- 0 x) x)
+  )
+
+;; True iff x and y have the same sign
+(defun samesign (x y)
+  (or
+   (and (pos y) (pos x))
+   (and (neg y) (neg x))
+   )
+  )
+
+;; Returns a list of the quotient and remainder
+(defun div (x y)
+  (list (/ x y) (% x y))
   )
 
 (defun ++ (x) (+ x 1))
@@ -357,8 +426,8 @@
     )
   )
 
-;; Selection sort. Also doesn't seem to work with let. Need to fix this.
-;; Could definitely be more efficient, but it works for now
+;; Selection sort.
+;; Could probably be more efficient, but it works for now
 (defun sort (l)
   (if (pair? l)
       (let ((themin (min l)))
@@ -366,6 +435,44 @@
       )
       l
       )
+  )
+
+
+;; Nieve approach to fibonacci. Slow but doesn't hit max recursion depth till over 15. Too slow to bother after that anyway.
+
+(defun nievefib (n)
+  (if (or (eq? n 0) (eq? n 1)) 1
+      (+ (nievefib (- n 1)) (nievefib (- n 2)))
+      )
+  )
+
+;; Finds the fibonacci sequence up to n iteratively. Goes up to 11
+(defun fibiter (n)
+  (reverse
+  (let ((x 0) (f1 0) (f2 1) (nums '(1)) (n (-- n)))
+    (do
+     ((x (++ x)) (f3 (+ f1 f2)) (nums (cons f3 nums)) (f1 f2) (f2 f3))
+     (< x (++ n))
+     nums)
+    )
+  )
+  )
+
+;; More recursive way of finding the nth fibonacci number. Can go up to 54
+(defun fibrec (n)
+  (reverse (fibrec_r n))
+  )
+
+(defun fibrec_r (n)
+  (if (eq? n 1) '(1 1)
+      (let ((discovered (fibrec_r (-- n))))
+	(cons (+ (car discovered) (cadr discovered)) discovered)
+	 ))
+  )
+
+;; Just the last value in fibonacci series found recursively. Same limitations as above
+(defun fib (n)
+  (car (fibrec_r n))
   )
 
 (let ((let '`(let ((let ',let)),let)))`(let ((let ',let)),let)) ; Evaluates to itself
