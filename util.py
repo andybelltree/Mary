@@ -38,7 +38,7 @@ def repl(interpreter=None, error_report=False):
     init_history(hist_file)
     while True:
         try:
-            print(">", end = "")
+            sys.stdout.write(">")
             print(interpreter.evaluate(input(), False))
         except (EOFError, KeyboardInterrupt):
             return

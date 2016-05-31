@@ -40,7 +40,7 @@ class Environment(object):
     def retrieve_definition(self, label):
         """Get definition of label in environment if it exists"""
         if label.value in self.definitions:
-            return self.definitions[label.value]
+            return self.definitions[label.value].copy()
         elif self.parent_environment:
             return self.parent_environment.retrieve_definition(label)
         else:

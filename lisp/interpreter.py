@@ -23,9 +23,14 @@ class Interpreter(object):
                 print("UNPRINTABLE: {}".format(e))
 
     def print_eval_history(self, expr):
-        if self.eval_history:
+        if self.eval_history or self.debug:
             print("\nEvaluation History:")
-            expr.print_eval(1)
+            expr.print_eval(1, self.debug)
+
+    def print_macro_history(self, expr):
+        if self.showmacros:
+            print("\nMacro Expansions:")
+            expr.print_macros(1)
                 
     def print_macroexpansion(self, format_str, *objects):
         objects = [repr(obj) for obj in objects]
@@ -41,11 +46,13 @@ class Interpreter(object):
             for expr in ast:
                 next_result = expr.evaluate(self.env)
                 self.print_eval_history(expr)
+                self.print_macro_history(expr)
                 # Convert back to list
                 results.append(next_result)
             return results
         else:
             result = ast.evaluate(self.env)
             self.print_eval_history(ast)
+            self.print_macro_history(ast)
             # Convert back to the form we received it in
             return result
