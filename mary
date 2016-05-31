@@ -14,7 +14,7 @@ parser.add_argument('-c', help='clear environment. Don\'t read in stdlib first',
 parser.add_argument('-e', help='get verbose error reporting', action='store_true', default=False)
 parser.add_argument('-r', help='set recursion depth of python', type=int, default=1000)
 parser.add_argument('-d', help='get evaluation history', action='store_true', default=False)
-
+parser.add_argument('-f', help='file to interpret')
 
 args = parser.parse_args()
 sys.setrecursionlimit(args.r)
@@ -22,4 +22,7 @@ sys.setrecursionlimit(args.r)
 interpr = Interpreter(args.v, args.m, args.d)
 if not args.c:
     interpret_file(join(dirname(__file__), "stdlib.lisp"), interpr)
-repl(interpr, args.e)
+if not args.f:
+    repl(interpr, args.e)
+else:
+    print(interpret_file(args.f, interpr))

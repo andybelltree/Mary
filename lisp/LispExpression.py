@@ -42,17 +42,17 @@ class LispExpression(metaclass=ABCMeta):
     def print_macros(self, depth):
         is_macro = len(self.children) > 0 and type(self.children[0]) == MacroExpression
         if is_macro:
+            print("|" * depth)
             print(">" * depth + str(self))
-            print("~" * depth + str(self.children[0]))
+            print("-" * depth + str(self.children[0]))
         for child in self.children:
-            child.print_macros(depth + 1 if is_macro else depth)
+            child.print_macros(depth + 1)
         if is_macro:
             print("=" * depth + str(self.result))
         if self.result:
             self.result.print_macros(depth)
     
     def print_eval(self, depth, verbose=False, char='-'):
-        #depth %= 40
         print(char*2 + (char + "|") * (depth-1) + ">" + str(self))
         if verbose and self.eval_env:
             print("\n" + str(self.eval_env) + "\n")
