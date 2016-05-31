@@ -25,16 +25,13 @@ INPUT_CHAR = "inputchar"
 GENSYM = "gensym"
 GENSYM_ESCAPE = "#"
 
+DEFUN = "defun"
         
 class Environment(object):
     """An environment of definitions in which to interpret a Lisp Expression"""
-    def __init__(self, parent_environment, interpreter=None):
+    def __init__(self, parent_environment):
         """Initialises the environment with its parent and an empty set of definitions"""
         self.parent_environment = parent_environment
-        if self.parent_environment and self.parent_environment.interpreter:
-            self.interpreter = self.parent_environment.interpreter
-        else:
-            self.interpreter = interpreter
         self.definitions = {}
 
     def retrieve_definition(self, label):
@@ -65,29 +62,15 @@ class Environment(object):
                 k:repr(v) for k,v in self.definitions.items()}))) 
     
 
-class DefaultEnvironment(Environment):
+class BaseEnvironment(Environment):
     """A default environment, with axiomatic function definitions"""
-    def __init__(self, interpreter=None):
+    def __init__(self):
         """Creates the default environment"""
-        super(DefaultEnvironment, self).__init__(None, interpreter)
+        super(BaseEnvironment, self).__init__(None)
         self._define_defaults()
 
     def _define_defaults(self):
-        """Defines default functions"""
-        self._define_lambda()
-        self._define_defmacro()
-        self._define_quote()
-        self._define_if()
-        self._define_car()
-        self._define_cdr()
-        self._define_cons()
-        self._define_atom()
-        self._define_quasiquote()
-        self._define_subtract()
-        self._define_lessthan()
-        self._define_print_sym()
-        self._define_input_char()
-        self._define_gensym()
+        raise NotImplementedError
 
     def _define_defmacro(self):
         """Defines the defmacro function"""
@@ -105,6 +88,17 @@ class DefaultEnvironment(Environment):
         self.define(SymbolExpression(LAMBDA), LispFunction(
             LAMBDA,
             lambda args, env : LambdaExpression(args, env)))
+
+    def _define_defun(self):
+        """Defines function definition"""
+        def defun(args, env):
+            if len(args) < 3:
+                raise WrongNumParamsError(DEFUN, 3, len(args))
+            else:
+                env.define(
+                    args[0], LambdaExpression(args[1:], env))
+                return args[0]
+        self.define(SymbolExpression(DEFUN), LispFunction(DEFUN, defun))
 
     def _define_quote(self):
         """Defines the quote function"""
@@ -342,3 +336,50 @@ class DefaultEnvironment(Environment):
             counter += 1
             return SymbolExpression(GENSYM_ESCAPE + str(counter))
         self.define(SymbolExpression(GENSYM), LispFunction(GENSYM, gensym))
+
+class MacroEnvironment(BaseEnvironment):
+    def _define_defaults(self):
+        """Defines default functions"""
+        self._define_lambda()
+        self._define_defmacro()
+        self._define_quote()
+        self._define_if()
+        self._define_car()
+        self._define_cdr()
+        self._define_cons()
+        self._define_atom()
+        self._define_quasiquote()
+        self._define_subtract()
+        self._define_lessthan()
+        self._define_print_sym()
+        self._define_input_char()
+        self._define_gensym()
+
+
+class DefaultEnvironment(BaseEnvironment):
+    def _define_defaults(self):
+        """Defines default functions"""
+        self._define_lambda()
+        self._define_defmacro()
+        self._define_quote()
+        self._define_if()
+        self._define_car()
+        self._define_cdr()
+        self._define_cons()
+        self._define_atom()
+        self._define_quasiquote()
+        self._define_subtract()
+        self._define_lessthan()
+        self._define_print_sym()
+        self._define_input_char()
+        self._define_gensym()
+        self._define_defun()
+
+class MinimumEnvironment(BaseEnvironment):
+    def _define_defaults(self):
+        """Defines default functions"""
+        self._define_lambda()
+        self._define_defun()
+        self._define_quote()
+        self._define_if()
+

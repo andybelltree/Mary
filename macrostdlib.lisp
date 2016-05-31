@@ -4,11 +4,11 @@
 ;;      )
 ;;   )
 
-;(defmacro defun (name params &rest body) ; defun macro
-;  `(defmacro ,name ,params
-;     `((lambda ,',params ,',@body) ,,@params)
-;     )
-;  )
+(defmacro defun (name params &rest body) ; defun macro
+  `(defmacro ,name ,params
+     `((lambda ,',params ,',@body) ,,@params)
+     )
+  )
 
 (defmacro list (&rest alist)
   (if alist

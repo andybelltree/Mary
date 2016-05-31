@@ -204,7 +204,7 @@ class LambdaExpression(ApplicableLispExpression):
         return result
 
     def copy(self):
-        return self.__class__(self.value[:], self.parent_environment)
+        return self.__class__(self.value[:], self.environment)
 
 
 class MacroExpression(ApplicableLispExpression):

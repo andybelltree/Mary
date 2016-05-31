@@ -8,11 +8,11 @@ SHOW_MACROEXPANSION = False
 
 class Interpreter(object):
     """Interprets source code"""
-    def __init__(self, debug=False, showmacros=False, eval_history=False):
+    def __init__(self, env=None, debug=False, showmacros=False, eval_history=False):
         self.debug = debug
         self.showmacros = showmacros
         self.eval_history = eval_history
-        self.env = DefaultEnvironment(self)
+        self.env = env if env else DefaultEnvironment()
 
     def print_debug(self, format_str, *objects):
         objects = [repr(obj) for obj in objects]
