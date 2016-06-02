@@ -4,11 +4,11 @@
 ;;      )
 ;;   )
 
-;(defmacro defun (name params &rest body) ; defun macro
-;  `(defmacro ,name ,params
-;     `((lambda ,',params ,',@body) ,,@params)
-;     )
-;  )
+(defmacro defun (name params &rest body) ; defun macro
+  `(defmacro ,name ,params
+     `((lambda ,',params ,',@body) ,,@params)
+     )
+  )
 
 (defmacro list (&rest alist)
   (if alist
@@ -59,7 +59,7 @@
 
 (defmacro and (&rest vals)
   `(cond
-    ((null? ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
+    ((null ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
     (,(car vals) (and ,@(cdr vals))) ; or if the first value is true
     ('t ())			; call recursively on the rest. Otherwise return false
     )
@@ -67,7 +67,7 @@
 
 (defmacro or (&rest vals)
   `(cond
-    ((null? ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
+    ((null ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
     (,(car vals) 't) ; or if the first value is true return true,
     ('t (or ,@(cdr vals))) ; otherwise call recursively on the rest.
     )
@@ -140,22 +140,23 @@
 (defun eq? (a b)
   (cond ((and (atom? a) (atom? b))
 	 (not (or (< a b) (> a b))))
-	((and (null? a) (null? b)) 't)
+	((and (null a) (null b)) 't)
 	((or (atom? a) (atom? b)) ())
 	('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))
 	)
   )
 
-(defun null? (x)
+
+(defun null (x)
   (if x () 't)
   )
 
 (defun not (x)
-  (null? x))
+  (null x))
 
 
 (defun pair? (x)
-  (cdr x)
+  (if (cdr x) 't)
   )
 
 (defmacro apply (fn &rest params)
@@ -286,15 +287,15 @@
 
 (defun / (x y)
   (if (< (- (abs x) (abs y)) 0)
-      (if (or (eq? x 0) (samesign? x y)) 0 -1)
-      (if (samesign? x y)	    
+      (if (or (eq? x 0) (samesign x y)) 0 -1)
+      (if (samesign x y)	    
 	  (++ (/ (- x y) y))
 	  (-- (/ (+ x y) y))
       )
   )
 )
 (defun % (x y)
-  (if (neg? y)
+  (if (neg y)
       ;; Special case
       (if (> x y)
 	  (if (> x 0) (% (+ x y) y) x)
@@ -336,13 +337,13 @@
   (eq? (% x 2) 0)
   )
 
-;; True iff pos?itive
-(defun pos? (x)
+;; True iff positive
+(defun pos (x)
   (< 0 x)
   )
 
-;; True iff neg?ative
-(defun neg? (x)
+;; True iff negative
+(defun neg (x)
   (< x 0)
   )
 
@@ -352,10 +353,10 @@
   )
 
 ;; True iff x and y have the same sign
-(defun samesign? (x y)
+(defun samesign (x y)
   (or
-   (and (pos? y) (pos? x))
-   (and (neg? y) (neg? x))
+   (and (pos y) (pos x))
+   (and (neg y) (neg x))
    )
   )
 
@@ -457,7 +458,7 @@
 (defun remove (item l)
   (cond
     ;; If the list is empty, item wasn't in it. Return
-    ((null? l) ())
+    ((null l) ())
     ;; If you've found the item, return the rest
     ((eq? (car l) item)
      (cdr l))

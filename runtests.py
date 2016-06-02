@@ -6,6 +6,7 @@ from util import interpret_file
 from lisp.interpreter import Interpreter
 from lisp.LispErrors import *
 from difflib import Differ
+from lisp.Environment import *
 
 def extract_comments(filename):
     comments = []
@@ -17,15 +18,10 @@ def extract_comments(filename):
                 comments.append(line.strip("; \n"))
     return "\n".join(comments)
 
-testdir = join(dirname(__file__), "tests")
-testfiles = [(join(testdir, filename), filename[:-5]) for filename in listdir(testdir) if filename.endswith(".lisp")]
-diff = Differ()
-
-for testfile, testname in testfiles:
-    interpr = Interpreter()
-    interpret_file(join(dirname(__file__), "stdlib.lisp"), interpr)
+def runtest(interpreter, testfile, testname):
+    diff = Differ()
     try:
-        results = interpret_file(testfile, interpr, True).splitlines()
+        results = interpret_file(testfile, interpreter, True).splitlines()
     except RuntimeError:
         print("Maximum recursion depth exceeded in {}\n".format(testname))
     except LispError as e:
@@ -41,22 +37,25 @@ for testfile, testname in testfiles:
             if not(row.strip() == "" or row.startswith(" ")):
                 found_diff = True
                 print(row)
-
-        # while i < len(d):
-        #     if not(d[i].startswith(" ")):
-        #         found_diff = True
-        #         if (d[i].startswith("-")):
-        #             got = d[i][2:]
-        #             i += 1
-        #             expected = d[i][2:]
-        #             chardiff = None
-        #             if len(d) > i + 1 and d[i+1].startswith("?"):
-        #                 i += 1
-        #             print("-- Expected {} but got {} on row {}".format(expected, got, row))
-        #         else:
-        #             print("--Bad output: {}".format(d[i]))
-        #     i += 1
-        #     row += 1
         if not found_diff:
             print("Output matches expected")
         print()
+    
+def main():
+
+    testdir = join(dirname(__file__), "tests")
+    mintestdir = join(dirname(__file__), "mintests")
+    testfiles = [(join(testdir, filename), filename[:-5]) for filename in listdir(testdir) if filename.endswith(".lisp")]
+    mintestfiles = [(join(mintestdir, filename), filename[:-5]) for filename in listdir(mintestdir) if filename.endswith(".lisp")]
+
+    for interpreter, title, lib, files in [(Interpreter(DefaultEnvironment()), "With defun:", "stdlib.lisp", testfiles),
+                                    (Interpreter(MacroEnvironment()), "Without defun:", "macrostdlib.lisp", testfiles),
+                                    (Interpreter(MinimumEnvironment()), "Minimal Lisp:", "minstdlib.lisp", mintestfiles)]:
+        print(title)
+        for testfile, testname in files:
+            interpret_file(join(dirname(__file__), lib), interpreter)
+            runtest(interpreter, testfile, testname)
+
+if __name__ == "__main__":
+    main()
+
