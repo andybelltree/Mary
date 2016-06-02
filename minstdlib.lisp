@@ -34,6 +34,18 @@
   (car (car (cdr l)))
   )
 
+(defun cddar (l)
+  (cdr (cdr (car l)))
+  )
+
+(defun caddr (l)
+  (car (cdr (cdr l)))
+  )
+
+(defun cdddr (l)
+  (cdr (cdr (cdr l)))
+  )
+
 (defun cdadr (l)
   (cdr (car (cdr l)))
   )
@@ -45,7 +57,25 @@
 	   (cond (cdr options))))
   )
 
-(defun set (label val)
-  (defun 'label () val)
+(defun null? (x)
+  (if x () x)
+  )
+
+(defun pair? (x)
+  (cdr x)
+  )
+
+(defun append (lista listb)
+  (if lista
+      (cons (car lista) (append (cdr lista) listb))
+      listb
+      )
+  )
+
+(defun reverse (l)
+  (if (pair? l)
+      (append (reverse (cdr l)) (cons (car l) ()))
+      l
+      )
   )
 

@@ -53,7 +53,7 @@ class LispExpression(metaclass=ABCMeta):
             self.result.print_macros(depth)
     
     def print_eval(self, depth, verbose=False, char='-'):
-        print(char*2 + (char + "|") * (depth-1) + ">" + str(self))
+        print(char + (char + "|") * (depth-1) + ">" + str(self))
         if verbose and self.eval_env:
             print("\n" + str(self.eval_env) + "\n")
         if self.result:

@@ -138,8 +138,14 @@
   )
 
 (defun eq? (a b)
-  (not (or (< a b) (> a b)))
+  (cond ((and (atom? a) (atom? b))
+	 (not (or (< a b) (> a b))))
+	((and (null a) (null b)) 't)
+	((or (atom? a) (atom? b)) ())
+	('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))
+	)
   )
+
 
 (defun null (x)
   (if x () 't)
