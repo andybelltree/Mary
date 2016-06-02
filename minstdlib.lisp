@@ -1,6 +1,6 @@
-(defun or (x y) (if x y x))
+(defun or (x y) (if x x y))
 
-(defun and (x y) (if x x y))
+(defun and (x y) (if x y x))
 
 (defun cons (x y) (lambda (f) (f x y)))
 

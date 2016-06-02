@@ -79,6 +79,13 @@
   )
   )
 
+(defun reduce (fn l)
+  (if (pair? l)
+      (fn (car l) (reduce fn (cdr l)))
+      (car l)
+      )
+  )
+
 (defmacro do (bindings test &rest body)
   `(letrec ,bindings
      (let ((result (progn ,@body)))
@@ -145,6 +152,27 @@
 	('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))
 	)
   )
+
+
+(defmacro max (&rest l)
+  `(if ',(pair? l)
+      (let ((nextmax (max ,@(cdr l))))
+	(if (< ,(car l) nextmax) nextmax ,(car l))
+	)
+      ,(car l)
+      )
+  )
+
+(defmacro min (&rest l)
+  `(if ',(pair? l)
+      (let ((nextmin (min ,@(cdr l))))
+	(if (< ,(car l) nextmin) nextmin ,(car l))
+	)
+      ,(car l)
+      )
+  )
+
+
 
 (defun null? (x)
   (if x () 't)
@@ -439,18 +467,32 @@
     )
   )
 
-(defun min (l)
+(defun minlist (l)
   (if (pair? l)
       (let ((this (car l)))
 	(if
 	 (< this (cadr l))
-	 (min (cons this (cddr l)))
-	 (min (cdr l))
+	 (minlist (cons this (cddr l)))
+	 (minlist (cdr l))
 	 )
 	)
       (car l)
    )
   )
+
+(defun maxlist (l)
+  (if (pair? l)
+      (let ((this (car l)))
+	(if
+	 (> this (cadr l))
+	 (maxlist (cons this (cddr l)))
+	 (maxlist (cdr l))
+	 )
+	)
+      (car l)
+   )
+  )
+
 
 
 ;; Remove first instance of a given item from the l
@@ -470,7 +512,7 @@
 ;; Could probably be more efficient, but it works for now
 (defun sort (l)
   (if (pair? l)
-      (let ((themin (min l)))
+      (let ((themin (minlist l)))
 	(cons themin (sort (remove themin l)))
       )
       l

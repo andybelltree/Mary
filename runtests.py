@@ -51,7 +51,7 @@ def main():
     for interpreter, title, lib, files in [(Interpreter(DefaultEnvironment()), "With defun:", "stdlib.lisp", testfiles),
                                     (Interpreter(MacroEnvironment()), "Without defun:", "macrostdlib.lisp", testfiles),
                                     (Interpreter(MinimumEnvironment()), "Minimal Lisp:", "minstdlib.lisp", mintestfiles)]:
-        print(title)
+        print("="*5 + title + "="*5 + "\n")
         for testfile, testname in files:
             interpret_file(join(dirname(__file__), lib), interpreter)
             runtest(interpreter, testfile, testname)

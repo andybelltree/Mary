@@ -118,9 +118,6 @@ class Parser(object):
     def result(self):
         return self._result
 
-    def unparsed_result(self):
-        return unparse(self._result)
-
 def strip_comments(source):
     output = []
     for line in source.split("\n"):
@@ -134,6 +131,4 @@ def strip_comments(source):
         output.append(next_line)
     transform = "\n".join(output)
     return transform
-    
-def unparse(result):
-    return str(result)
+

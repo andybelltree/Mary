@@ -47,6 +47,7 @@ class Environment(object):
     def define(self, label, value):
         """Define a new function or value"""
         self.definitions[label.value] = value
+        return label
 
     def create_child(self):
         return Environment(self)
@@ -54,7 +55,7 @@ class Environment(object):
     def __repr__(self):
         """Useful for debugging."""
         form_str = "{:^100}"
-        if type(self) == DefaultEnvironment:
+        if issubclass(self.__class__, BaseEnvironment):
             return form_str.format("{DEFAULT ENVIRONMENT}")
         return (
             "" if self.parent_environment is None else ("{}\n"+form_str+"\n"+form_str).format(
@@ -78,9 +79,7 @@ class BaseEnvironment(Environment):
             if len(args) < 3:
                 raise WrongNumParamsError(DEFMACRO, 3, len(args))
             else:
-                env.define(
-                    args[0], MacroExpression(args[1:], args[0]))
-                return args[0]
+                return env.define(args[0], MacroExpression(args[1:], args[0]))
         self.define(SymbolExpression(DEFMACRO), LispFunction(DEFMACRO, defmacro))
 
     def _define_lambda(self):
@@ -95,9 +94,7 @@ class BaseEnvironment(Environment):
             if len(args) < 3:
                 raise WrongNumParamsError(DEFUN, 3, len(args))
             else:
-                env.define(
-                    args[0], LambdaExpression(args[1:], env))
-                return args[0]
+                return env.define(args[0], LambdaExpression(args[1:], env))
         self.define(SymbolExpression(DEFUN), LispFunction(DEFUN, defun))
 
     def _define_quote(self):
@@ -126,12 +123,8 @@ class BaseEnvironment(Environment):
                 elif tagged(args, UNQUOTE):                    
                     # If you see a comma, begin evaluation again, then put it in a list
                     result = quasiquote_expand(tagged_data(args), backquotes-1)
-
                     # Special case: The layer below is a splice, which means this comma
                     # needs to be applied to each item in the resulting list.
-                    # From Bawden "Intuitively, an atsign has the eect of causing the
-                    # comma to be mapped over the elements of the value
-                    # of the following expression.
                     if not tagged_data(args).atom() and tagged(tagged_data(args), SPLICE):
                         return ListExpression([tag(UNQUOTE, exp) for exp in result.value])
                     else:
@@ -149,7 +142,6 @@ class BaseEnvironment(Environment):
                             reduce(lambda x,y: x+quasiquote_expand(y, backquotes).value,
                                    args.value,
                                    [])))
-
 
             def tagged(args, tag):
                 """True iff data has given tag"""
@@ -179,15 +171,10 @@ class BaseEnvironment(Environment):
             if len(args) < 2:
                 raise WrongNumParamsError(IF, 2, len(args))
             else:
-                condition = args[0].evaluate(env)
-                if condition.is_nill():
-                    if len(args) > 2:
-                        result = args[2].evaluate(env)
-                    else:
-                        result = Nils.nil
+                if args[0].evaluate(env).is_nill():
+                    return args[2].evaluate(env) if len(args) > 2 else Nils.nil
                 else:
-                    result = args[1].evaluate(env)
-                return result
+                    return args[1].evaluate(env)
         self.define(SymbolExpression(IF), LispFunction(IF, if_ex))
 
     def _define_atom(self):
@@ -197,7 +184,7 @@ class BaseEnvironment(Environment):
                 raise WrongNumParamsError(ATOM, 1, len(args))
             else:
                 arg = args[0].evaluate(env)
-                return (arg if arg.atom() else Nils.nil)
+                return arg if arg.atom() else Nils.nil
         self.define(
             SymbolExpression(ATOM), LispFunction(
                 ATOM, atom))
@@ -208,12 +195,10 @@ class BaseEnvironment(Environment):
             if len(args) < 1:
                 raise WrongNumParamsError(CAR, 1, len(args))
             exp = args[0].evaluate(env)
-            
             try:
                 return exp.car()
             except AttributeError:
                 raise TypeError(CAR, exp, "List or Symbol")
-
         self.define(SymbolExpression(CAR), LispFunction(CAR, car))
 
     def _define_cdr(self):
@@ -222,7 +207,6 @@ class BaseEnvironment(Environment):
             if len(args) < 1:
                 raise WrongNumParamsError(CDR, 1, len(args))
             exp = args[0].evaluate(env)
-            intermediate = ListExpression([SymbolExpression(CDR), exp])
             try:
                 return exp.cdr()
             except AttributeError:
@@ -236,10 +220,10 @@ class BaseEnvironment(Environment):
                 raise WrongNumParamsError(CONS, 2, len(args))
             expr1 = args[0].evaluate(env)
             expr2 = args[1].evaluate(env)
-            try:
-                return expr2.cons(expr1)
-            except AttributeError:
-                raise TypeError(CONS, exp_2, "List or Symbol")
+            if not (type(expr2) == ListExpression or
+                    type(expr1) == type(expr2) == SymbolExpression):
+                raise TypeError(CONS, str(expr1) + " and " + str(expr2), "Lists or Symbols")
+            return expr2.cons(expr1)
                 
         self.define(SymbolExpression(CONS), LispFunction(CONS, cons))
 
@@ -279,9 +263,7 @@ class BaseEnvironment(Environment):
             print_val = args[0].evaluate(env)
             if type(print_val) not in {str, int, float, SymbolExpression, NumberExpression}:
                 raise TypeError(PRINT, type(print_val), "Symbol")
-            print_val = str(print_val)
-            print_val = print_val.replace("\\n", "\n").replace("\\s", " ")
-            print(print_val, end="")
+            print(str(print_val).replace("\\n", "\n").replace("\\s", " "), end="")
             sys.stdout.flush()
             return Nils.null # Return an empty string
         self.define(SymbolExpression(PRINT), LispFunction(PRINT, print_sym))
@@ -339,15 +321,17 @@ class BaseEnvironment(Environment):
 
 class MacroEnvironment(BaseEnvironment):
     def _define_defaults(self):
-        """Defines default functions"""
+        """Defines default functions not including defun"""
         self._define_lambda()
         self._define_defmacro()
+
         self._define_quote()
         self._define_if()
         self._define_car()
         self._define_cdr()
         self._define_cons()
         self._define_atom()
+        
         self._define_quasiquote()
         self._define_subtract()
         self._define_lessthan()
@@ -358,7 +342,7 @@ class MacroEnvironment(BaseEnvironment):
 
 class DefaultEnvironment(BaseEnvironment):
     def _define_defaults(self):
-        """Defines default functions"""
+        """Defines all default functions"""
         self._define_lambda()
         self._define_defmacro()
         self._define_quote()
@@ -377,7 +361,7 @@ class DefaultEnvironment(BaseEnvironment):
 
 class MinimumEnvironment(BaseEnvironment):
     def _define_defaults(self):
-        """Defines default functions"""
+        """Defines a minimal set of default functions"""
         self._define_lambda()
         self._define_defun()
         self._define_quote()
