@@ -496,6 +496,14 @@
   (any? (map (lambda (x) (eq? x sym)) list))
   )
 
+(defun isdigit (sym)
+  (if sym
+      (and (in? (car sym) '(0 1 2 3 4 5 6 7 8 9))
+		(isdigit (cdr sym)))
+	   't
+      )
+  )
+
 
 (defun minlist (l)
   (if (pair? l)
