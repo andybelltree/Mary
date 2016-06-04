@@ -7,3 +7,6 @@
 (maxlist '(c d h q)) ;; q
 (maxlist '(5 33 2 100)) ;; 100
 (sort '(4 55 2 1)) ;; (1 2 4 55)
+(nth '(2 3 4) 1) ;; 3
+(nth '(2 3 4 5) 2) ;; 4
+(nth (nth '(2 3 (4 hello) 5) 2) 1) ;; hello

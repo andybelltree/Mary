@@ -221,7 +221,8 @@ class BaseEnvironment(Environment):
             expr1 = args[0].evaluate(env)
             expr2 = args[1].evaluate(env)
             if not (type(expr2) == ListExpression or
-                    type(expr1) == type(expr2) == SymbolExpression):
+                    (issubclass(type(expr2), AtomExpression) and
+                                issubclass(type(expr1), AtomExpression))):
                 raise TypeError(CONS, str(expr1) + " and " + str(expr2), "Lists or Symbols")
             return expr2.cons(expr1)
                 
@@ -261,9 +262,12 @@ class BaseEnvironment(Environment):
                 raise WrongNumParamsError(PRINT, 1, len(args))
             # Add any newline characters (\n) or spaces (\s)
             print_val = args[0].evaluate(env)
-            if type(print_val) not in {str, int, float, SymbolExpression, NumberExpression}:
-                raise TypeError(PRINT, type(print_val), "Symbol")
-            print(str(print_val).replace("\\n", "\n").replace("\\s", " "), end="")
+            if print_val.is_empty():
+                print("nil", end="")
+            else:
+                if not issubclass(type(print_val), AtomExpression):
+                    raise TypeError(PRINT, type(print_val), "Atom")
+                print(print_val.formatted(), end="")
             sys.stdout.flush()
             return Nils.null # Return an empty string
         self.define(SymbolExpression(PRINT), LispFunction(PRINT, print_sym))
@@ -297,16 +301,15 @@ class BaseEnvironment(Environment):
         def input_char(args, env):
             ch = getch()
             # Replace any carriage returns with newlines
-            if len(ch) == 1 and ord(ch) == 13:
+            if ord(ch) == 13:
                 ch = "\\n"
                 print("\n", end="")
-            elif ch == " ":
-                ch = "\\s"
-                print(" ", end="")
             else:
                 print(ch, end="")
+            if ch == " ":
+                ch = "\\s"
             sys.stdout.flush()
-            return SymbolExpression(ch)
+            return LispExpression.create_atom(ch)
 
         self.define(SymbolExpression(INPUT_CHAR), LispFunction(INPUT_CHAR, input_char))
 

@@ -55,11 +55,7 @@ class Parser(object):
             end = self._find_matching_paren(exp)
             return ListExpression([self._parse(e) for e in self._split_exps(exp[1:end])])
         else:
-            try:
-                float(exp)
-                return NumberExpression(exp)
-            except ValueError:
-                return SymbolExpression(exp)
+            return LispExpression.create_atom(exp)
             return exp
 
     def _parse_multiple(self, source):

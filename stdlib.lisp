@@ -1,22 +1,8 @@
-;; (defmacro defun (name params &rest body) ; defun macro
-;;   `(defmacro ,name (&rest params)
-;;      (cons '(lambda ,params ,@body) params)
-;;      )
-;;   )
-
-;(defmacro defun (name params &rest body) ; defun macro
-;  `(defmacro ,name ,params
-;     `((lambda ,',params ,',@body) ,,@params)
-;     )
-;  )
-
 (defmacro list (&rest alist)
   (if alist
       `(cons ,(car alist) (list ,@(cdr alist)))
       )
   )
-
-
 
 
 (defun cadr (l)
@@ -39,6 +25,10 @@
   (car (cdr (car l)))
   )
 
+(defun caddr (l)
+  (car (cdr (cdr l)))
+  )
+
 (defun caadr (l)
   (car (car (cdr l)))
   )
@@ -59,7 +49,7 @@
 
 (defmacro and (&rest vals)
   `(cond
-    ((null? ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
+    ((null ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
     (,(car vals) (and ,@(cdr vals))) ; or if the first value is true
     ('t ())			; call recursively on the rest. Otherwise return false
     )
@@ -67,10 +57,18 @@
 
 (defmacro or (&rest vals)
   `(cond
-    ((null? ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
+    ((null ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
     (,(car vals) 't) ; or if the first value is true return true,
     ('t (or ,@(cdr vals))) ; otherwise call recursively on the rest.
     )
+  )
+
+(defun all? (l)
+  (reduce and l)
+  )
+
+(defun any? (l)
+  (reduce or l)
   )
 
 (defun map (fn l)
@@ -86,12 +84,37 @@
       )
   )
 
+(defun zip (&rest ls)
+  (ziplist ls)
+  )
+
+(defun ziplist (ls)
+  (if (all? (cars ls)) (cons (cars ls) (ziplist (cdrs ls))))
+  )
+
+
 (defmacro do (bindings test &rest body)
   `(letrec ,bindings
      (let ((result (progn ,@body)))
      (if ,test (do ,bindings ,test ,@body) result))
      )
- )
+  )
+
+
+(defmacro foreach (itemname alist bindings &rest body)
+  `(let ((alist ,alist))
+   (do
+    ((,itemname (car alist)) (alist (cdr alist)) ,@bindings)
+    alist
+    ,@body
+     )
+   )
+  )
+
+
+(defmacro while (condition &rest body)
+  `(if ,condition (progn ,@body (while ,condition ,@body)))
+  )
 
 ;; From Graham
 (defmacro with-gensyms (syms &rest body)
@@ -132,7 +155,6 @@
   )
 
 
-
 (defmacro defunv (name params &rest body) ; defun macro allows &rest keyword. WIP
   `(defmacro ,name ,params
      `((lambda ,',(remove '&rest params) ,',@body) ',,@(remove '&rest params))
@@ -147,10 +169,14 @@
 (defun eq? (a b)
   (cond ((and (atom? a) (atom? b))
 	 (not (or (< a b) (> a b))))
-	((and (null? a) (null? b)) 't)
+	((and (null a) (null b)) 't)
 	((or (atom? a) (atom? b)) ())
 	('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))
 	)
+  )
+
+(defun eqz? (a)
+  (not (or (< a 0) (< 0 a)))
   )
 
 
@@ -173,17 +199,16 @@
   )
 
 
-
-(defun null? (x)
+(defun null (x)
   (if x () 't)
   )
 
 (defun not (x)
-  (null? x))
+  (null x))
 
 
 (defun pair? (x)
-  (cdr x)
+  (if (cdr x) 't)
   )
 
 (defmacro apply (fn &rest params)
@@ -230,6 +255,11 @@
       )
   )
 
+(defun nth (l n)
+  (if (eq? n 0)
+      (car l)
+      (nth (cdr l) (- n 1))))
+
 
 (defmacro progn (&rest body)
   `(last (list ,@body))
@@ -261,19 +291,8 @@
   )
 
 
-
-(defmacro zip (&rest ls)
-  `((lambda (ls) (if (car ls) (cons (cars ls) (zip (cdrs ls))))) ,ls)
-  )
-
-
-(defun cons_to_2 (x) (cons x '(2)))
 (defun double (x) (* 2 x))
 (defun id (x) x)
-(defun first (x) (id x))
-(defun second (x y) (last (l x y)))
-(defun third (x y z) (last (l x y z)))
-(defun fourth (x y z a) (last (l x y z a)))
 
 (defun reverse (l)
   (if (pair? l)
@@ -303,7 +322,7 @@
 
 (defun * (x y)
   (if (< x y) (* y x)
-      (if y
+      (if (not (eqz? y))
 	  (if (< 0 y)
 	      (+ x (* x (-- y)))
 	      (- (* x (+ y 1)) x)
@@ -314,8 +333,8 @@
 
 (defun / (x y)
   (if (< (- (abs x) (abs y)) 0)
-      (if (or (eq? x 0) (samesign? x y)) 0 -1)
-      (if (samesign? x y)	    
+      (if (or (eq? x 0) (samesign x y)) 0 -1)
+      (if (samesign x y)	    
 	  (++ (/ (- x y) y))
 	  (-- (/ (+ x y) y))
       )
@@ -336,7 +355,7 @@
   )
 
 (defun fast_exp (x y)
-  (if y
+  (if (not (eqz? y))
       (let ((half_exp (fast_exp x (/ y 2))))
 	(if (even? y)
 	    (* half_exp half_exp)
@@ -348,7 +367,7 @@
   )
 
 (defun exp (x y)
-  (if y
+  (if (not (eqz? y))
       (* x (exp x (- y 1)))
       1
       )
@@ -380,7 +399,7 @@
   )
 
 ;; True iff x and y have the same sign
-(defun samesign? (x y)
+(defun samesign (x y)
   (or
    (and (pos? y) (pos? x))
    (and (neg? y) (neg? x))
@@ -460,6 +479,18 @@
       )
   )
 
+(defun in? (sym list)
+  (any? (map (lambda (x) (eq? x sym)) list))
+  )
+
+(defun isdigit (sym)
+  (if sym
+      (and (in? (car sym) '(0 1 2 3 4 5 6 7 8 9))
+		(isdigit (cdr sym)))
+	   't
+      )
+  )
+
 (defun prompt (prompt)
   (progn
     (write prompt)
@@ -477,7 +508,7 @@
 	 )
 	)
       (car l)
-   )
+      )
   )
 
 (defun maxlist (l)
@@ -499,7 +530,7 @@
 (defun remove (item l)
   (cond
     ;; If the list is empty, item wasn't in it. Return
-    ((null? l) ())
+    ((null l) ())
     ;; If you've found the item, return the rest
     ((eq? (car l) item)
      (cdr l))

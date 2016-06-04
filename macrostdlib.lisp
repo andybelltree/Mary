@@ -37,6 +37,10 @@
   (car (cdr (car l)))
   )
 
+(defun caddr (l)
+  (car (cdr (cdr l)))
+  )
+
 (defun caadr (l)
   (car (car (cdr l)))
   )
@@ -84,23 +88,48 @@
       )
   )
 
+(defun all? (l)
+  (reduce and l)
+  )
+
+(defun any? (l)
+  (reduce or l)
+  )
+
+
+(defun ziplist (ls)
+  (if (all? (cars ls)) (cons (cars ls) (ziplist (cdrs ls))))
+  )
+
+
 (defmacro do (bindings test &rest body)
   `(letrec ,bindings
      (let ((result (progn ,@body)))
      (if ,test (do ,bindings ,test ,@body) result))
      )
- )
+  )
+
+(defmacro foreach (itemname alist bindings &rest body)
+  `(let ((alist ,alist))
+   (do
+    ((,itemname (car alist)) (alist (cdr alist)) ,@bindings)
+    alist
+    ,@body
+     )
+   )
+  )
+
 
 ;; From Graham
 (defmacro with-gensyms (syms &rest body)
-  `(let ,(map (lambda (s) `(,s (gensym))) syms)
+  `(let (map (lambda (s) (cons s (gensym))) ,syms)
      ,@body))
 
 (defmacro withgensyms (gensyms &rest body)
   (if gensyms
-      (replaceall `(car ,gensyms) '(gensym) `(withgensyms ,(cdr gensyms) ,@body)
+      (replaceall (car gensyms) (gensym) `(withgensyms ,(cdr gensyms) ,@body)
       )
-   '(progn body)
+   `(progn ,@body)
    )
   )
 
@@ -130,10 +159,9 @@
   )
 
 
-
 (defmacro defunv (name params &rest body) ; defun macro allows &rest keyword. WIP
   `(defmacro ,name ,params
-     `((lambda ,',(remove '&rest params) ,',@body) ',,@(remove '&rest params))
+     `((lambda ,',params ,',@body) ',,@(remove '&rest params))
      )
     )
 
@@ -150,6 +178,11 @@
 	('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))
 	)
   )
+
+(defun eqz? (a)
+  (not (or (< a 0) (< 0 a)))
+  )
+
 
 (defmacro max (&rest l)
   `(if ',(pair? l)
@@ -226,6 +259,12 @@
       )
   )
 
+(defun nth (l n)
+  (if (eq? n 0)
+      (car l)
+      (nth (cdr l) (- n 1))))
+
+
 
 (defmacro progn (&rest body)
   `(last (list ,@body))
@@ -258,18 +297,8 @@
 
 
 
-(defmacro zip (&rest ls)
-  `((lambda (ls) (if (car ls) (cons (cars ls) (zip (cdrs ls))))) ,ls)
-  )
-
-
-(defun cons_to_2 (x) (cons x '(2)))
 (defun double (x) (* 2 x))
 (defun id (x) x)
-(defun first (x) (id x))
-(defun second (x y) (last (l x y)))
-(defun third (x y z) (last (l x y z)))
-(defun fourth (x y z a) (last (l x y z a)))
 
 (defun reverse (l)
   (if (pair? l)
@@ -299,7 +328,7 @@
 
 (defun * (x y)
   (if (< x y) (* y x)
-      (if y
+      (if (not (eqz? y))
 	  (if (< 0 y)
 	      (+ x (* x (-- y)))
 	      (- (* x (+ y 1)) x)
@@ -318,7 +347,7 @@
   )
 )
 (defun % (x y)
-  (if (neg y)
+  (if (neg? y)
       ;; Special case
       (if (> x y)
 	  (if (> x 0) (% (+ x y) y) x)
@@ -332,7 +361,7 @@
   )
 
 (defun fast_exp (x y)
-  (if y
+  (if (not (eqz? y))
       (let ((half_exp (fast_exp x (/ y 2))))
 	(if (even? y)
 	    (* half_exp half_exp)
@@ -344,7 +373,7 @@
   )
 
 (defun exp (x y)
-  (if y
+  (if (not (eqz? y))
       (* x (exp x (- y 1)))
       1
       )
@@ -360,13 +389,13 @@
   (eq? (% x 2) 0)
   )
 
-;; True iff positive
-(defun pos (x)
+;; True iff pos?itive
+(defun pos? (x)
   (< 0 x)
   )
 
-;; True iff negative
-(defun neg (x)
+;; True iff neg?ative
+(defun neg? (x)
   (< x 0)
   )
 
@@ -378,8 +407,8 @@
 ;; True iff x and y have the same sign
 (defun samesign (x y)
   (or
-   (and (pos y) (pos x))
-   (and (neg y) (neg x))
+   (and (pos? y) (pos? x))
+   (and (neg? y) (neg? x))
    )
   )
 
@@ -462,6 +491,11 @@
     (readline)
     )
   )
+
+(defun in? (sym list)
+  (any? (map (lambda (x) (eq? x sym)) list))
+  )
+
 
 (defun minlist (l)
   (if (pair? l)

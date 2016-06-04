@@ -79,3 +79,27 @@
       )
   )
 
+(defun firsts (l)
+  (if l
+      (cons (caar l) (firsts (cdr l)))
+      )
+ )
+
+(defun seconds (l)
+  (if l
+      (cons (cadar l) (seconds (cdr l)))
+      )
+  )
+
+(defun reduce (fn l)
+  (if (pair? l)
+      (fn (car l) (reduce fn (cdr l)))
+      (car l)
+      )
+  )
+
+(defun map (fn l)
+  (if l
+      (cons (fn (car l)) (map fn (cdr l)))
+  )
+  )
