@@ -10,7 +10,7 @@ IF = "if"
 CAR = "car"
 CDR = "cdr"
 CONS = "cons"
-ATOM = "atom?"
+IS_ATOM = "atom?"
 
 SUBTRACT = "-"
 LESSTHAN = "<"
@@ -33,11 +33,14 @@ class Environment(object):
         """Initialises the environment with its parent and an empty set of definitions"""
         self.parent_environment = parent_environment
         self.definitions = {}
+        self.libs = []
 
     def retrieve_definition(self, label):
         """Get definition of label in environment if it exists"""
+        if not type(label) == SymbolExpression:
+            raise TypeError("definition retrieval", label, "Symbol Expression")
         if label.value in self.definitions:
-            return self.definitions[label.value].copy()
+            return self.definitions[label.value]
         elif self.parent_environment:
             return self.parent_environment.retrieve_definition(label)
         else:
@@ -46,6 +49,8 @@ class Environment(object):
 
     def define(self, label, value):
         """Define a new function or value"""
+        if not type(label) == SymbolExpression:
+            raise TypeError("definition", label, "Symbol Expression")
         self.definitions[label.value] = value
         return label
 
@@ -181,13 +186,13 @@ class BaseEnvironment(Environment):
         """Defines the atom function. True if argument is an atom, else ()"""
         def atom(args, env):
             if len(args) < 1:
-                raise WrongNumParamsError(ATOM, 1, len(args))
+                raise WrongNumParamsError(IS_ATOM, 1, len(args))
             else:
                 arg = args[0].evaluate(env)
                 return arg if arg.atom() else Nils.nil
         self.define(
-            SymbolExpression(ATOM), LispFunction(
-                ATOM, atom))
+            SymbolExpression(IS_ATOM), LispFunction(
+                IS_ATOM, atom))
 
     def _define_car(self):
         """Defines the car function"""
@@ -342,6 +347,8 @@ class MacroEnvironment(BaseEnvironment):
         self._define_input_char()
         self._define_gensym()
 
+        self.libs = ["macrostdlib.lisp", "stdlib.lisp"]
+
 
 class DefaultEnvironment(BaseEnvironment):
     def _define_defaults(self):
@@ -362,6 +369,8 @@ class DefaultEnvironment(BaseEnvironment):
         self._define_gensym()
         self._define_defun()
 
+        self.libs = ["fnstdlib.lisp", "stdlib.lisp"]
+
 class MinimumEnvironment(BaseEnvironment):
     def _define_defaults(self):
         """Defines a minimal set of default functions"""
@@ -369,4 +378,6 @@ class MinimumEnvironment(BaseEnvironment):
         self._define_defun()
         self._define_quote()
         self._define_if()
+
+        self.libs = ["minstdlib.lisp"]
 

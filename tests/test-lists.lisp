@@ -7,6 +7,9 @@
 (maxlist '(c d h q)) ;; q
 (maxlist '(5 33 2 100)) ;; 100
 (sort '(4 55 2 1)) ;; (1 2 4 55)
+(quicksort '(4 55 2 1)) ;; (1 2 4 55)
+(quicksort '(the quick brown fox jumped over the lazy dog)) ;; (brown dog fox jumped lazy over quick the the)
+(car (quicksort '(3 4 1 2 4 66 4 2 3 5 6 7 7 8 34 2 20 0))) ;; 0
 (nth '(2 3 4) 1) ;; 3
 (nth '(2 3 4 5) 2) ;; 4
 (nth (nth '(2 3 (4 hello) 5) 2) 1) ;; hello

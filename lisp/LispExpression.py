@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from .LispErrors import *
+from .EvalHistory import EvalHistory
 
 QUOTE="quote"
 QUASIQUOTE="quasiquote"
@@ -14,17 +15,14 @@ TRANSLATIONS = {
 }
 LAMBDA="lambda"
 
+
 # Lisp Expression objects
 class LispExpression(metaclass=ABCMeta):
     """A generic Lisp Expression"""
     def __init__(self, value):
         self.value = value
+        self.eval_hist = EvalHistory(self)
         
-        # Following are for storing debug information
-        self.children = []
-        self.result = None
-        self.eval_env = None
-
     def evaluate(self, environment):
         """By default, autoquote and return this expression"""
         return self
@@ -42,36 +40,27 @@ class LispExpression(metaclass=ABCMeta):
 
     def atom(self):
         """Returns true iff expression is a number or a symbol expression"""
-        return type(self) in {NumberExpression, SymbolExpression}
+        return False
 
-    def print_macros(self, depth):
-        """Print all macro expansions done when evaluating this expression"""
-        is_macro = len(self.children) > 0 and type(self.children[0]) == MacroExpression
-        if is_macro:
-            print("|" * depth)
-            print(">" * depth + str(self))
-            print("-" * depth + str(self.children[0]))
-        for child in self.children:
-            child.print_macros(depth + 1)
-        if is_macro:
-            print("=" * depth + str(self.result))
-        if self.result:
-            self.result.print_macros(depth)
+    def is_macro(self):
+        """Returns true iff expression is a macro expression. For stack tracing."""
+        return False
     
-    def print_eval(self, depth, verbose=False, char='-'):
-        """Print all steps taken to evaluate this expression"""
-        print((char * 2 + "|") * (depth-1) + char + ">" + str(self))
-        if verbose and self.eval_env:
-            print("\n" + str(self.eval_env) + "\n")
-        if self.result:
-            for child in self.children:
-                child.print_eval(depth + 1, verbose, char)
-            self.result.print_eval(depth, verbose, "=" if char == '-' else '-')
-
     def copy(self):
         """Return a copy of this expression. Only needed for tracing back debugging."""
         return self.__class__(self.value)
 
+    def track_children(self, children):
+        self.eval_hist.add_children(children)
+
+    def track_result(self, result):
+        self.eval_hist.add_result(result)
+        return result
+
+    def track_env(self, env):
+        self.eval_hist.add_env(env)
+        return env
+        
     @staticmethod
     def create_atom(value):
         if type(value) in {int, float}:
@@ -110,6 +99,10 @@ class AtomExpression(LispExpression):
 
     def formatted(self):
         return str(self).replace("\\n", "\n").replace("\\s", " ")
+
+    def atom(self):
+        """Returns true as expression is an atom"""
+        return True
     
     def __repr__(self):
         return str(self.value)
@@ -119,8 +112,7 @@ class SymbolExpression(AtomExpression):
     """A symbol"""
     def evaluate(self, environment):
         """Look up the value in the environment and return"""
-        self.result = environment.retrieve_definition(self)
-        return self.result
+        return self.track_result(environment.retrieve_definition(self).copy())
 
 class NumberExpression(AtomExpression):
     """A number"""
@@ -191,8 +183,7 @@ class LispFunction(ApplicableLispExpression):
     def apply_to(self, args, environment, caller):
         """Call function on arguments in environment. Eval info is stored with caller for
         debugging purposes"""
-        caller.result = self.body(args.value, environment)
-        return caller.result
+        return caller.track_result(self.body(args.value, environment))
 
     def copy(self):
         """Create a copy of this function"""
@@ -214,13 +205,13 @@ class LambdaExpression(ApplicableLispExpression):
             [argument.evaluate(environment) for argument in arguments.value])
         self.check_args(arguments)
         # Copy the body to separate it during debugging. Keep track of the environment
-        caller.result = self.body.copy()
+        body = caller.track_result(self.body.copy())
         # Create a closure to apply the lambda in
-        caller.result.eval_env = self.environment.create_child()
+        closure = body.track_env(self.environment.create_child())
         # Define all arguments in the closure
-        self._define_args(arguments, caller.result.eval_env)
+        self._define_args(arguments, closure)
         # Evaluate the body in the environment
-        return caller.result.evaluate(caller.result.eval_env)
+        return body.evaluate(closure)
 
     def copy(self):
         """Create a copy of this lambda expression"""
@@ -240,16 +231,17 @@ class MacroExpression(ApplicableLispExpression):
 
     def apply_to(self, arguments, environment, caller):
         """Apply to arguments in environment. Eval info stored with caller for debugging"""
-        # Create an environment to apply the macro in
-        self.eval_env = environment.create_child()
         self.check_args(arguments)
+        # Create an environment to apply the macro in
+        env = self.track_env(environment.create_child())
         # Define parameters in environment
-        self._define_args(arguments, self.eval_env)
+        self._define_args(arguments, env)
         # Evaluate the macro to get code to interpret, then interpret that code
         # Expand in a child environment of the one passed
-        caller.result = self.body.evaluate(self.eval_env)
-        # Interpret in the passed environment
-        return caller.result.evaluate(environment)
+        return caller.track_result(self.body.evaluate(env)).evaluate(environment)
+
+    def is_macro(self):
+        return True
 
     def copy(self):
         """Create a copy of this macro expression"""
@@ -266,7 +258,7 @@ class ListExpression(LispExpression):
     def __init__(self, input_list):
         assert(type(input_list) == list)
         super(ListExpression, self).__init__(input_list)
-        self.children = self.value
+        self.track_children(self.value)
 
     def car(self):
         """First item in list"""

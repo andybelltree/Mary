@@ -8,6 +8,8 @@ import code
 import atexit
 import os
 
+PROMPT = "> "
+
 def init_history(histfile):
     """Load file with command line history"""
     readline.parse_and_bind("tab: complete")
@@ -36,8 +38,10 @@ def repl(interpreter=None, error_report=False):
     init_history(hist_file)
     while True:
         try:
-            sys.stdout.write(">")
-            print(interpreter.evaluate(input(), False))
+            next = input(PROMPT)
+            if next in {"quit", "exit", "q"}:
+                break
+            print(interpreter.evaluate(next, False))
         except (EOFError, KeyboardInterrupt):
             return
         except LispError as e:

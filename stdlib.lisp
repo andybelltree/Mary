@@ -37,8 +37,6 @@
   (cdr (car (cdr l)))
   )
 
-
-
 (defmacro cond (&rest options)
   (if (car options)
       `(if ,(caar options)
@@ -84,10 +82,6 @@
       )
   )
 
-(defun zip (&rest ls)
-  (ziplist ls)
-  )
-
 (defun ziplist (ls)
   (if (all? (cars ls)) (cons (cars ls) (ziplist (cdrs ls))))
   )
@@ -116,32 +110,13 @@
   `(if ,condition (progn ,@body (while ,condition ,@body)))
   )
 
-;; From Graham
-(defmacro with-gensyms (syms &rest body)
-  `(let ,(map (lambda (s) `(,s (gensym))) syms)
-     ,@body))
-
-(defmacro withgensyms (gensyms &rest body)
-  (if gensyms
-      (replaceall `(car ,gensyms) '(gensym) `(withgensyms ,(cdr gensyms) ,@body)
-      )
-   '(progn body)
-   )
-  )
-
-(defun replaceall (a b l) ;; replaces all occurences of a with b in l
+(defun replaceall (a b l) ;; replaces all occurences of a with b in l. Works recursively
   (if l
   (if (atom? l) (if (eq? l a) b l)
 	(cons (replaceall a b (car l)) (replaceall a b (cdr l)))
 	)
   )
   )
-
-(defun getgensymslist (l)
-  (if l
-      (cons (cons (car l) (list '(gensym))) (getgensymslist (cdr l)))
-      )
-)
 
 (defmacro let (bindings &rest body)
       `((lambda ,(firsts bindings) (progn ,@body)) ,@(seconds bindings))
@@ -161,7 +136,6 @@
      )
     )
 
-
 (defun > (a b)
   (< b a)
   )
@@ -176,6 +150,7 @@
   )
 
 (defun eqz? (a)
+  ; True iff a == 0
   (not (or (< a 0) (< 0 a)))
   )
 
@@ -208,7 +183,7 @@
 
 
 (defun pair? (x)
-  (if (cdr x) 't)
+  (cdr x)
   )
 
 (defmacro apply (fn &rest params)
@@ -265,19 +240,10 @@
   `(last (list ,@body))
   )
 
-(defmacro apply-to-list (fn args)
-  (flatten (cons fn args))
-)
-
 (defun flatten (l)
   (if l
       (if (atom? (car l)) (cons (car l) (flatten (cdr l)))
 	(append (flatten (car l)) (flatten (cdr l)))))
-)
-
-(defun mapcarl (fn ls)
-  (if (cars ls)
-      (cons (apply-to-l fn (cars ls)) (mapcarl fn (cdrs ls))))
 )
 
 ;; Not working yet
@@ -286,9 +252,9 @@
 ;      (cons (apply-to-l ,fn (cars ,ls))) (apply-to-l mapcar (apply-to-l ,fn (cdrs ,ls))))
 ;  )
 
-(defmacro mapcar (fn &rest ls)
-  `((lambda (fn ls) (if (car ls) (cons (fn (cars ls)) (mapcar fn (cdrs ls))))) ,fn ,',ls)
-  )
+;;(defmacro mapcar (fn &rest ls)
+;;  `((lambda (fn ls) (if (car ls) (cons (fn (cars ls)) (mapcar fn (cdrs ls))))) ,fn ,',ls)
+;;  )
 
 
 (defun double (x) (* 2 x))
@@ -383,12 +349,12 @@
   (eq? (% x 2) 0)
   )
 
-;; True iff pos?itive
+;; True iff positive
 (defun pos? (x)
   (< 0 x)
   )
 
-;; True iff neg?ative
+;; True iff negative
 (defun neg? (x)
   (< x 0)
   )
@@ -415,10 +381,12 @@
 (defun -- (x) (- x 1))
 (defun sq (x) (* x x))
 
+;; Prints a space
 (defun printspace ()
   (printsym '\s)
   )
 
+;; Prints a new line
 (defun printnewline ()
   (printsym '\n)
   )
@@ -440,6 +408,7 @@
  `(print 't ,@params)
  )
 
+;; Prints a list of symbols
 (defun printlist (words)
   (if words (progn (printsym (car words)) (printspace) (printlist (cdr words))))
   )
@@ -457,6 +426,7 @@
   )
   )
 
+;; Reads a line
 (defun readline ()
   (let ((nextchar (inputchar)))
     (if
@@ -467,6 +437,7 @@
   )
   )
 
+;; True iff char is a newline
 (defun newline? (char)
   (eq? char '\n)
   )
@@ -479,10 +450,12 @@
       )
   )
 
+;; Checks if symbol is in list
 (defun in? (sym list)
   (any? (map (lambda (x) (eq? x sym)) list))
   )
 
+;; True iff symbol is a digit
 (defun isdigit (sym)
   (if sym
       (and (in? (car sym) '(0 1 2 3 4 5 6 7 8 9))
@@ -491,6 +464,7 @@
       )
   )
 
+;; Prompt user and collect command line input
 (defun prompt (prompt)
   (progn
     (write prompt)
@@ -498,6 +472,7 @@
     )
   )
 
+;; Find minimum in list
 (defun minlist (l)
   (if (pair? l)
       (let ((this (car l)))
@@ -511,6 +486,7 @@
       )
   )
 
+;; Find maximum in list
 (defun maxlist (l)
   (if (pair? l)
       (let ((this (car l)))
@@ -523,7 +499,6 @@
       (car l)
    )
   )
-
 
 
 ;; Remove first instance of a given item from the l
@@ -550,6 +525,30 @@
       )
   )
 
+(defun allwhich (l fn)
+  (if l
+      (if
+       (fn (car l))
+       (cons (car l) (allwhich (cdr l) fn))
+       (allwhich (cdr l) fn))
+      )
+  )
+
+(defun quicksort (l)
+  (if (pair? l)
+      (letrec ((pivot (car l))
+	       (firstlist (quicksort (allwhich (cdr l) (lambda (x) (< x pivot)))))
+	       (secondlist (quicksort (allwhich (cdr l) (lambda (x) (not (< x pivot))))))
+	       )
+      (append firstlist (cons pivot secondlist))
+      )
+      l
+      )
+  )
+
+(defun quicksortatom (a)
+  (coerce (quicksort a))
+  )
 
 ;; Nieve approach to fibonacci. Slow but doesn't hit max recursion depth till over 15. Too slow to bother after that anyway.
 
@@ -588,7 +587,7 @@
   (car (fibrec_r n))
   )
 
-(let ((let '`(let ((let ',let)),let)))`(let ((let ',let)),let)) ; Evaluates to itself
-;; credit - Mike McMahon
+;; (let ((let '`(let ((let ',let)),let)))`(let ((let ',let)),let)) ; Evaluates to itself
+;;  credit - Mike McMahon
 
 ;;(println 'Loaded 'std 'library)

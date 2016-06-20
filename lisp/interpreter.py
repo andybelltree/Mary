@@ -16,11 +16,11 @@ class Interpreter(object):
 
     def print_eval_history(self, expr):
         print("\nEvaluation History:")
-        expr.print_eval(1, self.debug)
+        expr.eval_hist.print_eval(1, self.debug)
 
     def print_macro_history(self, expr):
         print("\nMacro Expansions:")
-        expr.print_macros(1)
+        expr.eval_hist.print_macros(1)
                 
     def interpret_expression(self, expr):
         try:
