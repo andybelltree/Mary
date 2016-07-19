@@ -21,6 +21,21 @@ class Interpreter(object):
     def print_macro_history(self, expr):
         print("\nMacro Expansions:")
         expr.eval_hist.print_macros(1)
+
+    def toggle(self, mode):
+        """Turn debug, macros or verbose on or off"""
+        if mode == "verbose":
+            self.debug = not self.debug
+        elif mode == "macros":
+            self.showmacros = not self.showmacros
+        elif mode == "debug":
+            self.eval_history = not self.eval_history
+
+    def mode(self):
+        """Return dictionary with current mode"""
+        return {"verbose":self.debug,
+                "macros":self.showmacros,
+                "debug":self.eval_history}
                 
     def interpret_expression(self, expr):
         try:

@@ -26,6 +26,8 @@ GENSYM = "gensym"
 GENSYM_ESCAPE = "#"
 
 DEFUN = "defun"
+
+PYCALL = "pycall"
         
 class Environment(object):
     """An environment of definitions in which to interpret a Lisp Expression"""
@@ -350,25 +352,11 @@ class MacroEnvironment(BaseEnvironment):
         self.libs = ["macrostdlib.lisp", "stdlib.lisp"]
 
 
-class DefaultEnvironment(BaseEnvironment):
+class DefaultEnvironment(MacroEnvironment):
     def _define_defaults(self):
         """Defines all default functions"""
-        self._define_lambda()
-        self._define_defmacro()
-        self._define_quote()
-        self._define_if()
-        self._define_car()
-        self._define_cdr()
-        self._define_cons()
-        self._define_atom()
-        self._define_quasiquote()
-        self._define_subtract()
-        self._define_lessthan()
-        self._define_print_sym()
-        self._define_input_char()
-        self._define_gensym()
+        super(DefaultEnvironment, self)._define_defaults()
         self._define_defun()
-
         self.libs = ["fnstdlib.lisp", "stdlib.lisp"]
 
 class MinimumEnvironment(BaseEnvironment):
@@ -380,4 +368,31 @@ class MinimumEnvironment(BaseEnvironment):
         self._define_if()
 
         self.libs = ["minstdlib.lisp"]
+
+class PythonEnvironment(DefaultEnvironment):
+    def _define_pythoncall(self):
+        """Defines the python call function"""
+        def pycall(args, env):
+            if len(args) < 1:
+                raise WrongNumParamsError(PYCALL, 1, len(args))
+            pyfunc = args[0].evaluate(env)
+            if not pyfunc.atom():
+                raise BadInputError("python function", pyfunc)
+            python_exp = "{}({})".format(
+                str(pyfunc),
+                ", ".join([str(arg.evaluate(env).value) for arg in args[1:]]))
+            try:
+                result = eval(python_exp)
+            except Exception as e:
+                raise BadInputError("Python expression", python_exp)
+            if type(result) == list:
+                return ListExpression([LispExpression.create_atom(r) for r in result])
+            else:
+                return LispExpression.create_atom(result)
+        self.define(SymbolExpression(PYCALL), LispFunction(PYCALL, pycall))
+    
+    def _define_defaults(self):
+        """Allows for calling of arbitrary python functions"""
+        super(PythonEnvironment, self)._define_defaults()
+        self._define_pythoncall()
 

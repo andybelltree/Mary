@@ -28,6 +28,8 @@ def main():
         env = MacroEnvironment()
     elif args.a == 'min':
         env = MinimumEnvironment()
+    elif args.a == 'py':
+        env = PythonEnvironment()
     else:
         env = DefaultEnvironment()
     interpreter = Interpreter(env, args.v, args.m, args.d)
