@@ -22,18 +22,15 @@ def main(args):
     sorted_functions = deque()
     
     def visit(func):
-        if func and not (func.temp_mark or func.perm_mark):
-            func.temp_mark = True
+        if not func.mark:
             for dependency in func.dependent_on:
                 visit(dependency)
-            func.perm_mark = True
-            func.temp_mark = False
+            func.mark = True
             sorted_functions.appendleft(func)
-            
-    while definitions:
-        definition = definitions.pop()
-        visit(definition)
 
+    for definition in list(definitions):
+        visit(definition)
+        
     for definition in sorted_functions:
         definition.write_to_file(fileout)
 
@@ -62,8 +59,7 @@ class FunctionDefinition():
         self.definition = definition
         self.dependencies = dependencies
         self.dependencies.discard(self.name)
-        self.temp_mark = False
-        self.perm_mark = False
+        self.mark = False
         self.dependent_on = set()
         FunctionDefinition.all_definitions[self.name] = self
 

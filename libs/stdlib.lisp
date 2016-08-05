@@ -77,17 +77,83 @@
       )
   )
 
-(defun all? (l)
-  (reduce and l)
-  )
-
-(defun any? (l)
-  (reduce or l)
-  )
-
 
 (defun ziplist (ls)
   (if (all? (cars ls)) (cons (cars ls) (ziplist (cdrs ls))))
+  )
+
+(defun cars (l)
+  (firsts l)
+)
+
+(defun cdrs (l)
+  (if l
+      (cons (cdar l) (cdrs (cdr l))))
+  )
+
+(defun cadrs (l)
+  (seconds l)
+  )
+
+
+(defun firsts (l)
+  (if l
+      (cons (caar l) (firsts (cdr l)))
+      )
+ )
+
+(defun seconds (l)
+  (if l
+      (cons (cadar l) (seconds (cdr l)))
+      )
+  )
+
+(defun nth (l n)
+  (if (eq? n 0)
+      (car l)
+      (nth (cdr l) (- n 1))))
+
+
+;; Find minimum in list
+(defun minlist (l)
+  (if (pair? l)
+      (let ((this (car l)))
+	(if
+	 (< this (cadr l))
+	 (minlist (cons this (cddr l)))
+	 (minlist (cdr l))
+	 )
+	)
+      (car l)
+      )
+  )
+
+;; Find maximum in list
+(defun maxlist (l)
+  (if (pair? l)
+      (let ((this (car l)))
+	(if
+	 (> this (cadr l))
+	 (maxlist (cons this (cddr l)))
+	 (maxlist (cdr l))
+	 )
+	)
+      (car l)
+   )
+  )
+
+
+;; Remove first instance of a given item from the l
+(defun remove (item l)
+  (cond
+    ;; If the list is empty, item wasn't in it. Return
+    ((null? l) ())
+    ;; If you've found the item, return the rest
+    ((eq? (car l) item)
+     (cdr l))
+    ;; Otherwise keep looking
+    ('t (cons (car l) (remove item (cdr l))))
+    )
   )
 
 
@@ -186,6 +252,7 @@
       )
   )
 
+;; Predicates
 
 (defun null? (x)
   (if x () 't)
@@ -198,6 +265,57 @@
 (defun pair? (x)
   (cdr x)
   )
+
+
+(defun all? (l)
+  (reduce and l)
+  )
+
+(defun any? (l)
+  (reduce or l)
+  )
+
+;; True iff char is a newline
+(defun newline? (char)
+  (eq? char '\n)
+  )
+
+
+;; True iff positive
+(defun pos? (x)
+  (< 0 x)
+  )
+
+;; True iff negative
+(defun neg? (x)
+  (< x 0)
+  )
+
+
+;; True iff x and y have the same sign
+(defun samesign (x y)
+  (or
+   (and (pos? y) (pos? x))
+   (and (neg? y) (neg? x))
+   )
+  )
+
+;; Checks if symbol is in list
+(defun in? (sym list)
+  (any? (map (lambda (x) (eq? x sym)) list))
+  )
+
+;; True iff symbol is a digit
+(defun isdigit (sym)
+  (if sym
+      (and (in? (car sym) '(0 1 2 3 4 5 6 7 8 9))
+		(isdigit (cdr sym)))
+	   't
+      )
+  )
+
+
+;; Functions and more lists
 
 (defmacro apply (fn &rest params)
 `(,fn ,@params)
@@ -217,37 +335,6 @@
       )
   )
 
-(defun cars (l)
-  (firsts l)
-)
-
-(defun cdrs (l)
-  (if l
-      (cons (cdar l) (cdrs (cdr l))))
-  )
-
-(defun cadrs (l)
-  (seconds l)
-  )
-
-
-(defun firsts (l)
-  (if l
-      (cons (caar l) (firsts (cdr l)))
-      )
- )
-
-(defun seconds (l)
-  (if l
-      (cons (cadar l) (seconds (cdr l)))
-      )
-  )
-
-(defun nth (l n)
-  (if (eq? n 0)
-      (car l)
-      (nth (cdr l) (- n 1))))
-
 
 (defmacro progn (&rest body)
   `(last (list ,@body))
@@ -258,9 +345,6 @@
       (if (atom? (car l)) (cons (car l) (flatten (cdr l)))
 	(append (flatten (car l)) (flatten (cdr l)))))
 )
-
-(defun double (x) (* 2 x))
-(defun id (x) x)
 
 (defun reverse (l)
   (if (pair? l)
@@ -293,6 +377,14 @@
   )
   )
 
+(defun allwhich (l fn)
+  (if l
+      (if
+       (fn (car l))
+       (cons (car l) (allwhich (cdr l) fn))
+       (allwhich (cdr l) fn))
+      )
+  )
 
 ;; Arithmetic
 
@@ -364,27 +456,9 @@
   (eq? (% x 2) 0)
   )
 
-;; True iff positive
-(defun pos? (x)
-  (< 0 x)
-  )
-
-;; True iff negative
-(defun neg? (x)
-  (< x 0)
-  )
-
 ;; Absolute value of x
 (defun abs (x)
   (if (< x 0) (- 0 x) x)
-  )
-
-;; True iff x and y have the same sign
-(defun samesign (x y)
-  (or
-   (and (pos? y) (pos? x))
-   (and (neg? y) (neg? x))
-   )
   )
 
 ;; Returns a list of the quotient and remainder
@@ -456,30 +530,11 @@
   )
   )
 
-;; True iff char is a newline
-(defun newline? (char)
-  (eq? char '\n)
-  )
-
 ;; Turns a l of symbols into a string
 (defun coerce (l)
   (if (pair? l)
       (cons (car l) (coerce (cdr l)))
       (car l)
-      )
-  )
-
-;; Checks if symbol is in list
-(defun in? (sym list)
-  (any? (map (lambda (x) (eq? x sym)) list))
-  )
-
-;; True iff symbol is a digit
-(defun isdigit (sym)
-  (if sym
-      (and (in? (car sym) '(0 1 2 3 4 5 6 7 8 9))
-		(isdigit (cdr sym)))
-	   't
       )
   )
 
@@ -491,47 +546,8 @@
     )
   )
 
-;; Find minimum in list
-(defun minlist (l)
-  (if (pair? l)
-      (let ((this (car l)))
-	(if
-	 (< this (cadr l))
-	 (minlist (cons this (cddr l)))
-	 (minlist (cdr l))
-	 )
-	)
-      (car l)
-      )
-  )
 
-;; Find maximum in list
-(defun maxlist (l)
-  (if (pair? l)
-      (let ((this (car l)))
-	(if
-	 (> this (cadr l))
-	 (maxlist (cons this (cddr l)))
-	 (maxlist (cdr l))
-	 )
-	)
-      (car l)
-   )
-  )
-
-
-;; Remove first instance of a given item from the l
-(defun remove (item l)
-  (cond
-    ;; If the list is empty, item wasn't in it. Return
-    ((null? l) ())
-    ;; If you've found the item, return the rest
-    ((eq? (car l) item)
-     (cdr l))
-    ;; Otherwise keep looking
-    ('t (cons (car l) (remove item (cdr l))))
-    )
-  )
+;; Sorting
 
 ;; Selection sort.
 ;; Could probably be more efficient, but it works for now
@@ -544,14 +560,6 @@
       )
   )
 
-(defun allwhich (l fn)
-  (if l
-      (if
-       (fn (car l))
-       (cons (car l) (allwhich (cdr l) fn))
-       (allwhich (cdr l) fn))
-      )
-  )
 
 (defun quicksort (l)
   (if (pair? l)
@@ -579,6 +587,8 @@
 (defun sortatom (a)
 (coerce (sort a))
   )
+
+;; Fibonacci
 
 ;; Nieve approach to fibonacci. Slow but doesn't hit max recursion depth till over 15. Too slow to bother after that anyway.
 
