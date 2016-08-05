@@ -16,7 +16,7 @@ KEYWORDS = {"import":"import",
             "q":"quit",
             "macros":"mode_edit",
             "debug":"mode_edit",
-            "verbose":"mode_edit",
+            "environments":"mode_edit",
             "mode":"mode"}
 
 def init_history(histfile):
@@ -45,7 +45,7 @@ def resolve_keyword(keyword, line, interpreter):
 
     import <library> : interpret contents of a given lisp library
     quit, exit, q : exit the repl
-    (macros|verbose|debug) (on|off) : change feedback level
+    (macros|environments|debug) (on|off) : change feedback level
     mode : display current mode
     
     """

@@ -1,0 +1,1809 @@
+
+Evaluation History:
+->(defun zip (&rest ls) (ziplist ls))
+--|->defun
+==|=>defun [builtin]
+--|->zip
+--|->(&rest ls)
+--|->(ziplist ls)
+=>zip
+
+Evaluation History:
+->(defmacro list (&rest alist) (if alist `(cons ,(car alist) (list ,@(cdr alist)))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->list
+--|->(&rest alist)
+--|->(if alist `(cons ,(car alist) (list ,@(cdr alist))))
+=>list
+
+Evaluation History:
+->(defun cadr (l) (car (cdr l)))
+--|->defun
+==|=>defun [builtin]
+--|->cadr
+--|->(l)
+--|->(car (cdr l))
+=>cadr
+
+Evaluation History:
+->(defun cdar (l) (cdr (car l)))
+--|->defun
+==|=>defun [builtin]
+--|->cdar
+--|->(l)
+--|->(cdr (car l))
+=>cdar
+
+Evaluation History:
+->(defun caar (l) (car (car l)))
+--|->defun
+==|=>defun [builtin]
+--|->caar
+--|->(l)
+--|->(car (car l))
+=>caar
+
+Evaluation History:
+->(defun cddr (l) (cdr (cdr l)))
+--|->defun
+==|=>defun [builtin]
+--|->cddr
+--|->(l)
+--|->(cdr (cdr l))
+=>cddr
+
+Evaluation History:
+->(defun cadar (l) (car (cdr (car l))))
+--|->defun
+==|=>defun [builtin]
+--|->cadar
+--|->(l)
+--|->(car (cdr (car l)))
+=>cadar
+
+Evaluation History:
+->(defun caddr (l) (car (cdr (cdr l))))
+--|->defun
+==|=>defun [builtin]
+--|->caddr
+--|->(l)
+--|->(car (cdr (cdr l)))
+=>caddr
+
+Evaluation History:
+->(defun caadr (l) (car (car (cdr l))))
+--|->defun
+==|=>defun [builtin]
+--|->caadr
+--|->(l)
+--|->(car (car (cdr l)))
+=>caadr
+
+Evaluation History:
+->(defun cdadr (l) (cdr (car (cdr l))))
+--|->defun
+==|=>defun [builtin]
+--|->cdadr
+--|->(l)
+--|->(cdr (car (cdr l)))
+=>cdadr
+
+Evaluation History:
+->(defmacro cond (&rest options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->cond
+--|->(&rest options)
+--|->(if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options))))
+=>cond
+
+Evaluation History:
+->(defmacro and (&rest vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) (and ,@(cdr vals))) ('t ())))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->and
+--|->(&rest vals)
+--|->`(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) (and ,@(cdr vals))) ('t ()))
+=>and
+
+Evaluation History:
+->(defmacro or (&rest vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) 't) ('t (or ,@(cdr vals)))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->or
+--|->(&rest vals)
+--|->`(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) 't) ('t (or ,@(cdr vals))))
+=>or
+
+Evaluation History:
+->(defun all? (l) (reduce and l))
+--|->defun
+==|=>defun [builtin]
+--|->all?
+--|->(l)
+--|->(reduce and l)
+=>all?
+
+Evaluation History:
+->(defun any? (l) (reduce or l))
+--|->defun
+==|=>defun [builtin]
+--|->any?
+--|->(l)
+--|->(reduce or l)
+=>any?
+
+Evaluation History:
+->(defun map (fn l) (if l (cons (fn (car l)) (map fn (cdr l)))))
+--|->defun
+==|=>defun [builtin]
+--|->map
+--|->(fn l)
+--|->(if l (cons (fn (car l)) (map fn (cdr l))))
+=>map
+
+Evaluation History:
+->(defun reduce (fn l) (if (pair? l) (fn (car l) (reduce fn (cdr l))) (car l)))
+--|->defun
+==|=>defun [builtin]
+--|->reduce
+--|->(fn l)
+--|->(if (pair? l) (fn (car l) (reduce fn (cdr l))) (car l))
+=>reduce
+
+Evaluation History:
+->(defun ziplist (ls) (if (all? (cars ls)) (cons (cars ls) (ziplist (cdrs ls)))))
+--|->defun
+==|=>defun [builtin]
+--|->ziplist
+--|->(ls)
+--|->(if (all? (cars ls)) (cons (cars ls) (ziplist (cdrs ls))))
+=>ziplist
+
+Evaluation History:
+->(defmacro do (bindings test &rest body) `(letrec ,bindings (let ((result (progn ,@body))) (if ,test (do ,bindings ,test ,@body) result))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->do
+--|->(bindings test &rest body)
+--|->`(letrec ,bindings (let ((result (progn ,@body))) (if ,test (do ,bindings ,test ,@body) result)))
+=>do
+
+Evaluation History:
+->(defmacro foreach (itemname alist bindings &rest body) `(let ((alist ,alist)) (do ((,itemname (car alist)) (alist (cdr alist)) ,@bindings) alist ,@body)))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->foreach
+--|->(itemname alist bindings &rest body)
+--|->`(let ((alist ,alist)) (do ((,itemname (car alist)) (alist (cdr alist)) ,@bindings) alist ,@body))
+=>foreach
+
+Evaluation History:
+->(defmacro while (condition &rest body) `(if ,condition (progn ,@body (while ,condition ,@body))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->while
+--|->(condition &rest body)
+--|->`(if ,condition (progn ,@body (while ,condition ,@body)))
+=>while
+
+Evaluation History:
+->(defun replaceall (a b l) (if l (if (atom? l) (if (eq? l a) b l) (cons (replaceall a b (car l)) (replaceall a b (cdr l))))))
+--|->defun
+==|=>defun [builtin]
+--|->replaceall
+--|->(a b l)
+--|->(if l (if (atom? l) (if (eq? l a) b l) (cons (replaceall a b (car l)) (replaceall a b (cdr l)))))
+=>replaceall
+
+Evaluation History:
+->(defmacro let (bindings &rest body) `((lambda ,(firsts bindings) (progn ,@body)) ,@(seconds bindings)))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->let
+--|->(bindings &rest body)
+--|->`((lambda ,(firsts bindings) (progn ,@body)) ,@(seconds bindings))
+=>let
+
+Evaluation History:
+->(defmacro letrec (bindings &rest body) (if bindings `((lambda (,(caar bindings)) (letrec ,(cdr bindings) ,@body)) ,(cadar bindings)) `(progn ,@body)))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->letrec
+--|->(bindings &rest body)
+--|->(if bindings `((lambda (,(caar bindings)) (letrec ,(cdr bindings) ,@body)) ,(cadar bindings)) `(progn ,@body))
+=>letrec
+
+Evaluation History:
+->(defmacro flet (bindings &rest body) (if bindings `((lambda () (progn (defun ,@(car bindings)) (flet ,(cdr bindings) ,@body)))) `(progn ,@body)))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->flet
+--|->(bindings &rest body)
+--|->(if bindings `((lambda () (progn (defun ,@(car bindings)) (flet ,(cdr bindings) ,@body)))) `(progn ,@body))
+=>flet
+
+Evaluation History:
+->(defmacro defunv (name params &rest body) `(defmacro ,name ,params `((lambda ,',(remove '&rest params) ,',@body) ',,@(remove '&rest params))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->defunv
+--|->(name params &rest body)
+--|->`(defmacro ,name ,params `((lambda ,',(remove '&rest params) ,',@body) ',,@(remove '&rest params)))
+=>defunv
+
+Evaluation History:
+->(defun > (a b) (< b a))
+--|->defun
+==|=>defun [builtin]
+--|->>
+--|->(a b)
+--|->(< b a)
+=>>
+
+Evaluation History:
+->(defun eq? (a b) (cond ((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))))
+--|->defun
+==|=>defun [builtin]
+--|->eq?
+--|->(a b)
+--|->(cond ((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b)))))
+=>eq?
+
+Evaluation History:
+->(defun eqz? (a) (not (or (< a 0) (< 0 a))))
+--|->defun
+==|=>defun [builtin]
+--|->eqz?
+--|->(a)
+--|->(not (or (< a 0) (< 0 a)))
+=>eqz?
+
+Evaluation History:
+->(defmacro max (&rest l) `(if ',(pair? l) (let ((nextmax (max ,@(cdr l)))) (if (< ,(car l) nextmax) nextmax ,(car l))) ,(car l)))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->max
+--|->(&rest l)
+--|->`(if ',(pair? l) (let ((nextmax (max ,@(cdr l)))) (if (< ,(car l) nextmax) nextmax ,(car l))) ,(car l))
+=>max
+
+Evaluation History:
+->(defmacro min (&rest l) `(if ',(pair? l) (let ((nextmin (min ,@(cdr l)))) (if (< ,(car l) nextmin) nextmin ,(car l))) ,(car l)))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->min
+--|->(&rest l)
+--|->`(if ',(pair? l) (let ((nextmin (min ,@(cdr l)))) (if (< ,(car l) nextmin) nextmin ,(car l))) ,(car l))
+=>min
+
+Evaluation History:
+->(defun null? (x) (if x () 't))
+--|->defun
+==|=>defun [builtin]
+--|->null?
+--|->(x)
+--|->(if x () 't)
+=>null?
+
+Evaluation History:
+->(defun not (x) (null? x))
+--|->defun
+==|=>defun [builtin]
+--|->not
+--|->(x)
+--|->(null? x)
+=>not
+
+Evaluation History:
+->(defun pair? (x) (cdr x))
+--|->defun
+==|=>defun [builtin]
+--|->pair?
+--|->(x)
+--|->(cdr x)
+=>pair?
+
+Evaluation History:
+->(defmacro apply (fn &rest params) `(,fn ,@params))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->apply
+--|->(fn &rest params)
+--|->`(,fn ,@params)
+=>apply
+
+Evaluation History:
+->(defmacro lambdachain (params vals &rest body) (if (cdr params) `((lambda (,(car params)) (lambdachain ,(cdr params) ,(cdr vals) ,body)) ,(car vals)) `((lambda (,(car params)) ,@body) ,(car vals))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->lambdachain
+--|->(params vals &rest body)
+--|->(if (cdr params) `((lambda (,(car params)) (lambdachain ,(cdr params) ,(cdr vals) ,body)) ,(car vals)) `((lambda (,(car params)) ,@body) ,(car vals)))
+=>lambdachain
+
+Evaluation History:
+->(defun append (lista listb) (if lista (cons (car lista) (append (cdr lista) listb)) listb))
+--|->defun
+==|=>defun [builtin]
+--|->append
+--|->(lista listb)
+--|->(if lista (cons (car lista) (append (cdr lista) listb)) listb)
+=>append
+
+Evaluation History:
+->(defun cars (l) (firsts l))
+--|->defun
+==|=>defun [builtin]
+--|->cars
+--|->(l)
+--|->(firsts l)
+=>cars
+
+Evaluation History:
+->(defun cdrs (l) (if l (cons (cdar l) (cdrs (cdr l)))))
+--|->defun
+==|=>defun [builtin]
+--|->cdrs
+--|->(l)
+--|->(if l (cons (cdar l) (cdrs (cdr l))))
+=>cdrs
+
+Evaluation History:
+->(defun cadrs (l) (seconds l))
+--|->defun
+==|=>defun [builtin]
+--|->cadrs
+--|->(l)
+--|->(seconds l)
+=>cadrs
+
+Evaluation History:
+->(defun firsts (l) (if l (cons (caar l) (firsts (cdr l)))))
+--|->defun
+==|=>defun [builtin]
+--|->firsts
+--|->(l)
+--|->(if l (cons (caar l) (firsts (cdr l))))
+=>firsts
+
+Evaluation History:
+->(defun seconds (l) (if l (cons (cadar l) (seconds (cdr l)))))
+--|->defun
+==|=>defun [builtin]
+--|->seconds
+--|->(l)
+--|->(if l (cons (cadar l) (seconds (cdr l))))
+=>seconds
+
+Evaluation History:
+->(defun nth (l n) (if (eq? n 0) (car l) (nth (cdr l) (- n 1))))
+--|->defun
+==|=>defun [builtin]
+--|->nth
+--|->(l n)
+--|->(if (eq? n 0) (car l) (nth (cdr l) (- n 1)))
+=>nth
+
+Evaluation History:
+->(defmacro progn (&rest body) `(last (list ,@body)))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->progn
+--|->(&rest body)
+--|->`(last (list ,@body))
+=>progn
+
+Evaluation History:
+->(defun flatten (l) (if l (if (atom? (car l)) (cons (car l) (flatten (cdr l))) (append (flatten (car l)) (flatten (cdr l))))))
+--|->defun
+==|=>defun [builtin]
+--|->flatten
+--|->(l)
+--|->(if l (if (atom? (car l)) (cons (car l) (flatten (cdr l))) (append (flatten (car l)) (flatten (cdr l)))))
+=>flatten
+
+Evaluation History:
+->(defun double (x) (* 2 x))
+--|->defun
+==|=>defun [builtin]
+--|->double
+--|->(x)
+--|->(* 2 x)
+=>double
+
+Evaluation History:
+->(defun id (x) x)
+--|->defun
+==|=>defun [builtin]
+--|->id
+--|->(x)
+--|->x
+=>id
+
+Evaluation History:
+->(defun reverse (l) (if (pair? l) (append (reverse (cdr l)) (cons (car l) ())) l))
+--|->defun
+==|=>defun [builtin]
+--|->reverse
+--|->(l)
+--|->(if (pair? l) (append (reverse (cdr l)) (cons (car l) ())) l)
+=>reverse
+
+Evaluation History:
+->(defun reversestr (l) (if (pair? l) (append (reverse (cdr l)) (car l)) l))
+--|->defun
+==|=>defun [builtin]
+--|->reversestr
+--|->(l)
+--|->(if (pair? l) (append (reverse (cdr l)) (car l)) l)
+=>reversestr
+
+Evaluation History:
+->(defun last (l) (if (cdr l) (last (cdr l)) (car l)))
+--|->defun
+==|=>defun [builtin]
+--|->last
+--|->(l)
+--|->(if (cdr l) (last (cdr l)) (car l))
+=>last
+
+Evaluation History:
+->(defun + (x y) (- x (- 0 y)))
+--|->defun
+==|=>defun [builtin]
+--|->+
+--|->(x y)
+--|->(- x (- 0 y))
+=>+
+
+Evaluation History:
+->(defun * (x y) (if (< x y) (* y x) (if (not (eqz? y)) (if (< 0 y) (+ x (* x (-- y))) (- (* x (+ y 1)) x)) 0)))
+--|->defun
+==|=>defun [builtin]
+--|->*
+--|->(x y)
+--|->(if (< x y) (* y x) (if (not (eqz? y)) (if (< 0 y) (+ x (* x (-- y))) (- (* x (+ y 1)) x)) 0))
+=>*
+
+Evaluation History:
+->(defun / (x y) (if (< (- (abs x) (abs y)) 0) (if (or (eq? x 0) (samesign x y)) 0 -1) (if (samesign x y) (++ (/ (- x y) y)) (-- (/ (+ x y) y)))))
+--|->defun
+==|=>defun [builtin]
+--|->/
+--|->(x y)
+--|->(if (< (- (abs x) (abs y)) 0) (if (or (eq? x 0) (samesign x y)) 0 -1) (if (samesign x y) (++ (/ (- x y) y)) (-- (/ (+ x y) y))))
+=>/
+
+Evaluation History:
+->(defun % (x y) (if (neg? y) (if (> x y) (if (> x 0) (% (+ x y) y) x) (% (- x y) y)) (if (< x y) (if (< x 0) (% (+ x y) y) x) (% (- x y) y))))
+--|->defun
+==|=>defun [builtin]
+--|->%
+--|->(x y)
+--|->(if (neg? y) (if (> x y) (if (> x 0) (% (+ x y) y) x) (% (- x y) y)) (if (< x y) (if (< x 0) (% (+ x y) y) x) (% (- x y) y)))
+=>%
+
+Evaluation History:
+->(defun fast_exp (x y) (if (not (eqz? y)) (let ((half_exp (fast_exp x (/ y 2)))) (if (even? y) (* half_exp half_exp) (* half_exp (* half_exp x)))) 1))
+--|->defun
+==|=>defun [builtin]
+--|->fast_exp
+--|->(x y)
+--|->(if (not (eqz? y)) (let ((half_exp (fast_exp x (/ y 2)))) (if (even? y) (* half_exp half_exp) (* half_exp (* half_exp x)))) 1)
+=>fast_exp
+
+Evaluation History:
+->(defun exp (x y) (if (not (eqz? y)) (* x (exp x (- y 1))) 1))
+--|->defun
+==|=>defun [builtin]
+--|->exp
+--|->(x y)
+--|->(if (not (eqz? y)) (* x (exp x (- y 1))) 1)
+=>exp
+
+Evaluation History:
+->(defun ** (x y) (if (< y 0) (progn (println 'Exponent 'must 'not 'be 'less 'than 'zero) -1) (exp x y)))
+--|->defun
+==|=>defun [builtin]
+--|->**
+--|->(x y)
+--|->(if (< y 0) (progn (println 'Exponent 'must 'not 'be 'less 'than 'zero) -1) (exp x y))
+=>**
+
+Evaluation History:
+->(defun even? (x) (eq? (% x 2) 0))
+--|->defun
+==|=>defun [builtin]
+--|->even?
+--|->(x)
+--|->(eq? (% x 2) 0)
+=>even?
+
+Evaluation History:
+->(defun pos? (x) (< 0 x))
+--|->defun
+==|=>defun [builtin]
+--|->pos?
+--|->(x)
+--|->(< 0 x)
+=>pos?
+
+Evaluation History:
+->(defun neg? (x) (< x 0))
+--|->defun
+==|=>defun [builtin]
+--|->neg?
+--|->(x)
+--|->(< x 0)
+=>neg?
+
+Evaluation History:
+->(defun abs (x) (if (< x 0) (- 0 x) x))
+--|->defun
+==|=>defun [builtin]
+--|->abs
+--|->(x)
+--|->(if (< x 0) (- 0 x) x)
+=>abs
+
+Evaluation History:
+->(defun samesign (x y) (or (and (pos? y) (pos? x)) (and (neg? y) (neg? x))))
+--|->defun
+==|=>defun [builtin]
+--|->samesign
+--|->(x y)
+--|->(or (and (pos? y) (pos? x)) (and (neg? y) (neg? x)))
+=>samesign
+
+Evaluation History:
+->(defun div (x y) (list (/ x y) (% x y)))
+--|->defun
+==|=>defun [builtin]
+--|->div
+--|->(x y)
+--|->(list (/ x y) (% x y))
+=>div
+
+Evaluation History:
+->(defun ++ (x) (+ x 1))
+--|->defun
+==|=>defun [builtin]
+--|->++
+--|->(x)
+--|->(+ x 1)
+=>++
+
+Evaluation History:
+->(defun -- (x) (- x 1))
+--|->defun
+==|=>defun [builtin]
+--|->--
+--|->(x)
+--|->(- x 1)
+=>--
+
+Evaluation History:
+->(defun sq (x) (* x x))
+--|->defun
+==|=>defun [builtin]
+--|->sq
+--|->(x)
+--|->(* x x)
+=>sq
+
+Evaluation History:
+->(defun printspace () (printsym '\s))
+--|->defun
+==|=>defun [builtin]
+--|->printspace
+--|->()
+--|->(printsym '\s)
+=>printspace
+
+Evaluation History:
+->(defun printnewline () (printsym '\n))
+--|->defun
+==|=>defun [builtin]
+--|->printnewline
+--|->()
+--|->(printsym '\n)
+=>printnewline
+
+Evaluation History:
+->(defmacro print (newline? &rest params) `(if ',params (progn (printsym ,(car params)) (printspace) (print ,newline? ,@(cdr params))) (if ,newline? (printnewline))))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->print
+--|->(newline? &rest params)
+--|->`(if ',params (progn (printsym ,(car params)) (printspace) (print ,newline? ,@(cdr params))) (if ,newline? (printnewline)))
+=>print
+
+Evaluation History:
+->(defmacro println (&rest params) `(print 't ,@params))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->println
+--|->(&rest params)
+--|->`(print 't ,@params)
+=>println
+
+Evaluation History:
+->(defun printlist (words) (if words (progn (printsym (car words)) (printspace) (printlist (cdr words)))))
+--|->defun
+==|=>defun [builtin]
+--|->printlist
+--|->(words)
+--|->(if words (progn (printsym (car words)) (printspace) (printlist (cdr words))))
+=>printlist
+
+Evaluation History:
+->(defmacro write (&rest params) `(print () ,@params))
+--|->defmacro
+==|=>defmacro [builtin]
+--|->write
+--|->(&rest params)
+--|->`(print () ,@params)
+=>write
+
+Evaluation History:
+->(defun inputnchars (n) (if (- n 1) (append (inputnchars (- n 1)) (inputchar)) (inputchar)))
+--|->defun
+==|=>defun [builtin]
+--|->inputnchars
+--|->(n)
+--|->(if (- n 1) (append (inputnchars (- n 1)) (inputchar)) (inputchar))
+=>inputnchars
+
+Evaluation History:
+->(defun readline () (let ((nextchar (inputchar))) (if (newline? nextchar) () (coerce (cons nextchar (readline))))))
+--|->defun
+==|=>defun [builtin]
+--|->readline
+--|->()
+--|->(let ((nextchar (inputchar))) (if (newline? nextchar) () (coerce (cons nextchar (readline)))))
+=>readline
+
+Evaluation History:
+->(defun newline? (char) (eq? char '\n))
+--|->defun
+==|=>defun [builtin]
+--|->newline?
+--|->(char)
+--|->(eq? char '\n)
+=>newline?
+
+Evaluation History:
+->(defun coerce (l) (if (pair? l) (cons (car l) (coerce (cdr l))) (car l)))
+--|->defun
+==|=>defun [builtin]
+--|->coerce
+--|->(l)
+--|->(if (pair? l) (cons (car l) (coerce (cdr l))) (car l))
+=>coerce
+
+Evaluation History:
+->(defun in? (sym list) (any? (map (lambda (x) (eq? x sym)) list)))
+--|->defun
+==|=>defun [builtin]
+--|->in?
+--|->(sym list)
+--|->(any? (map (lambda (x) (eq? x sym)) list))
+=>in?
+
+Evaluation History:
+->(defun isdigit (sym) (if sym (and (in? (car sym) '(0 1 2 3 4 5 6 7 8 9)) (isdigit (cdr sym))) 't))
+--|->defun
+==|=>defun [builtin]
+--|->isdigit
+--|->(sym)
+--|->(if sym (and (in? (car sym) '(0 1 2 3 4 5 6 7 8 9)) (isdigit (cdr sym))) 't)
+=>isdigit
+
+Evaluation History:
+->(defun prompt (prompt) (progn (write prompt) (readline)))
+--|->defun
+==|=>defun [builtin]
+--|->prompt
+--|->(prompt)
+--|->(progn (write prompt) (readline))
+=>prompt
+
+Evaluation History:
+->(defun minlist (l) (if (pair? l) (let ((this (car l))) (if (< this (cadr l)) (minlist (cons this (cddr l))) (minlist (cdr l)))) (car l)))
+--|->defun
+==|=>defun [builtin]
+--|->minlist
+--|->(l)
+--|->(if (pair? l) (let ((this (car l))) (if (< this (cadr l)) (minlist (cons this (cddr l))) (minlist (cdr l)))) (car l))
+=>minlist
+
+Evaluation History:
+->(defun maxlist (l) (if (pair? l) (let ((this (car l))) (if (> this (cadr l)) (maxlist (cons this (cddr l))) (maxlist (cdr l)))) (car l)))
+--|->defun
+==|=>defun [builtin]
+--|->maxlist
+--|->(l)
+--|->(if (pair? l) (let ((this (car l))) (if (> this (cadr l)) (maxlist (cons this (cddr l))) (maxlist (cdr l)))) (car l))
+=>maxlist
+
+Evaluation History:
+->(defun remove (item l) (cond ((null? l) ()) ((eq? (car l) item) (cdr l)) ('t (cons (car l) (remove item (cdr l))))))
+--|->defun
+==|=>defun [builtin]
+--|->remove
+--|->(item l)
+--|->(cond ((null? l) ()) ((eq? (car l) item) (cdr l)) ('t (cons (car l) (remove item (cdr l)))))
+=>remove
+
+Evaluation History:
+->(defun sort (l) (if (pair? l) (let ((themin (minlist l))) (cons themin (sort (remove themin l)))) l))
+--|->defun
+==|=>defun [builtin]
+--|->sort
+--|->(l)
+--|->(if (pair? l) (let ((themin (minlist l))) (cons themin (sort (remove themin l)))) l)
+=>sort
+
+Evaluation History:
+->(defun allwhich (l fn) (if l (if (fn (car l)) (cons (car l) (allwhich (cdr l) fn)) (allwhich (cdr l) fn))))
+--|->defun
+==|=>defun [builtin]
+--|->allwhich
+--|->(l fn)
+--|->(if l (if (fn (car l)) (cons (car l) (allwhich (cdr l) fn)) (allwhich (cdr l) fn)))
+=>allwhich
+
+Evaluation History:
+->(defun quicksort (l) (if (pair? l) (letrec ((pivot (car l)) (firstlist (quicksort (allwhich (cdr l) (lambda (x) (< x pivot))))) (secondlist (quicksort (allwhich (cdr l) (lambda (x) (not (< x pivot))))))) (append firstlist (cons pivot secondlist))) l))
+--|->defun
+==|=>defun [builtin]
+--|->quicksort
+--|->(l)
+--|->(if (pair? l) (letrec ((pivot (car l)) (firstlist (quicksort (allwhich (cdr l) (lambda (x) (< x pivot))))) (secondlist (quicksort (allwhich (cdr l) (lambda (x) (not (< x pivot))))))) (append firstlist (cons pivot secondlist))) l)
+=>quicksort
+
+Evaluation History:
+->(defun quicksortatom (a) (coerce (quicksort a)))
+--|->defun
+==|=>defun [builtin]
+--|->quicksortatom
+--|->(a)
+--|->(coerce (quicksort a))
+=>quicksortatom
+
+Evaluation History:
+->(defun sortatom (a) (coerce (sort a)))
+--|->defun
+==|=>defun [builtin]
+--|->sortatom
+--|->(a)
+--|->(coerce (sort a))
+=>sortatom
+
+Evaluation History:
+->(defun nievefib (n) (if (or (eq? n 0) (eq? n 1)) 1 (+ (nievefib (- n 1)) (nievefib (- n 2)))))
+--|->defun
+==|=>defun [builtin]
+--|->nievefib
+--|->(n)
+--|->(if (or (eq? n 0) (eq? n 1)) 1 (+ (nievefib (- n 1)) (nievefib (- n 2))))
+=>nievefib
+
+Evaluation History:
+->(defun fibiter (n) (reverse (let ((x 0) (f1 0) (f2 1) (nums '(1)) (n (-- n))) (do ((x (++ x)) (f3 (+ f1 f2)) (nums (cons f3 nums)) (f1 f2) (f2 f3)) (< x (++ n)) nums))))
+--|->defun
+==|=>defun [builtin]
+--|->fibiter
+--|->(n)
+--|->(reverse (let ((x 0) (f1 0) (f2 1) (nums '(1)) (n (-- n))) (do ((x (++ x)) (f3 (+ f1 f2)) (nums (cons f3 nums)) (f1 f2) (f2 f3)) (< x (++ n)) nums)))
+=>fibiter
+
+Evaluation History:
+->(defun fibrec (n) (reverse (fibrec_r n)))
+--|->defun
+==|=>defun [builtin]
+--|->fibrec
+--|->(n)
+--|->(reverse (fibrec_r n))
+=>fibrec
+
+Evaluation History:
+->(defun fibrec_r (n) (if (eq? n 1) '(1 1) (let ((discovered (fibrec_r (-- n)))) (cons (+ (car discovered) (cadr discovered)) discovered))))
+--|->defun
+==|=>defun [builtin]
+--|->fibrec_r
+--|->(n)
+--|->(if (eq? n 1) '(1 1) (let ((discovered (fibrec_r (-- n)))) (cons (+ (car discovered) (cadr discovered)) discovered)))
+=>fibrec_r
+
+Evaluation History:
+->(defun fib (n) (car (fibrec_r n)))
+--|->defun
+==|=>defun [builtin]
+--|->fib
+--|->(n)
+--|->(car (fibrec_r n))
+=>fib
+
+Evaluation History:
+->(defun foo (x) (if (< x 5) (+ x 1) (* x 2)))
+--|->defun
+==|=>defun [builtin]
+--|->foo
+--|->(x)
+--|->(if (< x 5) (+ x 1) (* x 2))
+=>foo
+
+Evaluation History:
+->(defun bar (x y) (if (< x y) x y))
+--|->defun
+==|=>defun [builtin]
+--|->bar
+--|->(x y)
+--|->(if (< x y) x y)
+=>bar
+
+Evaluation History:
+->(defun fizzbuzz (x y) (cond ((> x y) ()) ((and (eqz? (% x 5)) (eqz? (% x 3))) (cons 'fizzbuzz (fizzbuzz (+ x 1) y))) ((eqz? (% x 5)) (cons 'fizz (fizzbuzz (+ x 1) y))) ((eqz? (% x 3)) (cons 'buzz (fizzbuzz (+ x 1) y))) ('t (cons x (fizzbuzz (+ x 1) y)))))
+--|->defun
+==|=>defun [builtin]
+--|->fizzbuzz
+--|->(x y)
+--|->(cond ((> x y) ()) ((and (eqz? (% x 5)) (eqz? (% x 3))) (cons 'fizzbuzz (fizzbuzz (+ x 1) y))) ((eqz? (% x 5)) (cons 'fizz (fizzbuzz (+ x 1) y))) ((eqz? (% x 3)) (cons 'buzz (fizzbuzz (+ x 1) y))) ('t (cons x (fizzbuzz (+ x 1) y))))
+=>fizzbuzz
+
+Evaluation History:
+->(defun hello_x () (progn (println 'Hello\sWorld!) (println (cons 'Hello\s (prompt 'What\sis\syour\sname?)))))
+--|->defun
+==|=>defun [builtin]
+--|->hello_x
+--|->()
+--|->(progn (println 'Hello\sWorld!) (println (cons 'Hello\s (prompt 'What\sis\syour\sname?))))
+=>hello_x
+
+Evaluation History:
+->(defun dfs (node tree) (if tree (if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree))))))
+--|->defun
+==|=>defun [builtin]
+--|->dfs
+--|->(node tree)
+--|->(if tree (if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree)))))
+=>dfs
+
+Evaluation History:
+->(let ((the_tree '(a (b) (c)))) (dfs 'b the_tree))
+--|->let
+==|=>(macro let (bindings body) `((lambda ,(firsts bindings) (progn ,@body)) ,@(seconds bindings)))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+              {'bindings': "((the_tree '(a (b) (c))))", 'body': "((dfs 'b the_tree))"}              
+
+--|->((the_tree '(a (b) (c))))
+--|->(dfs 'b the_tree)
+=>((lambda (the_tree) (progn (dfs 'b the_tree))) '(a (b) (c)))
+--|->(lambda (the_tree) (progn (dfs 'b the_tree)))
+--|--|->lambda
+==|==|=>lambda [builtin]
+--|--|->(the_tree)
+--|--|->(progn (dfs 'b the_tree))
+==|=>(lambda (the_tree) (progn (dfs 'b the_tree)))
+--|->'(a (b) (c))
+--|--|->quote
+==|==|=>quote [builtin]
+--|--|->(a (b) (c))
+==|=>(a (b) (c))
+=>(progn (dfs 'b the_tree))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                    {'the_tree': '(a (b) (c))'}                                     
+
+--|->progn
+==|=>(macro progn (body) `(last (list ,@body)))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                    {'the_tree': '(a (b) (c))'}                                     
+                                                 ||                                                 
+                                  {'body': "((dfs 'b the_tree))"}                                   
+
+--|->(dfs 'b the_tree)
+=>(last (list (dfs 'b the_tree)))
+--|->last
+==|=>(lambda (l) (if (cdr l) (last (cdr l)) (car l)))
+--|->(list (dfs 'b the_tree))
+--|--|->list
+==|==|=>(macro list (alist) (if alist `(cons ,(car alist) (list ,@(cdr alist)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                    {'the_tree': '(a (b) (c))'}                                     
+                                                 ||                                                 
+                                  {'alist': "((dfs 'b the_tree))"}                                  
+
+--|--|->(dfs 'b the_tree)
+==|=>(cons (dfs 'b the_tree) (list))
+--|--|->cons
+==|==|=>cons [builtin]
+--|--|->(dfs 'b the_tree)
+--|--|--|->dfs
+==|==|==|=>(lambda (node tree) (if tree (if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree))))))
+--|--|--|->'b
+--|--|--|--|->quote
+==|==|==|==|=>quote [builtin]
+--|--|--|--|->b
+==|==|==|=>b
+--|--|--|->the_tree
+==|==|==|=>(a (b) (c))
+==|==|=>(if tree (if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                {'tree': '(a (b) (c))', 'node': 'b'}                                
+
+--|--|--|->if
+==|==|==|=>if [builtin]
+--|--|--|->tree
+==|==|==|=>(a (b) (c))
+--|--|--|->(if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree))))
+--|--|--|--|->if
+==|==|==|==|=>if [builtin]
+--|--|--|--|->(eq? node (car tree))
+--|--|--|--|--|->eq?
+==|==|==|==|==|=>(lambda (a b) (cond ((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))))
+--|--|--|--|--|->node
+==|==|==|==|==|=>b
+--|--|--|--|--|->(car tree)
+--|--|--|--|--|--|->car
+==|==|==|==|==|==|=>car [builtin]
+--|--|--|--|--|--|->tree
+==|==|==|==|==|==|=>(a (b) (c))
+==|==|==|==|==|=>a
+==|==|==|==|=>(cond ((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'a'}                                        
+
+--|--|--|--|--|->cond
+==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'a'}                                        
+                                                 ||                                                 
+{'options': "(((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b)))))"}
+
+--|--|--|--|--|->((and (atom? a) (atom? b)) (not (or (< a b) (> a b))))
+--|--|--|--|--|->((and (null? a) (null? b)) 't)
+--|--|--|--|--|->((or (atom? a) (atom? b)) ())
+--|--|--|--|--|->('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))
+==|==|==|==|=>(if (and (atom? a) (atom? b)) (not (or (< a b) (> a b))) (cond ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))))
+--|--|--|--|--|->if
+==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|->(and (atom? a) (atom? b))
+--|--|--|--|--|--|->and
+==|==|==|==|==|==|=>(macro and (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) (and ,@(cdr vals))) ('t ())))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'a'}                                        
+                                                 ||                                                 
+                                 {'vals': '((atom? a) (atom? b))'}                                  
+
+--|--|--|--|--|--|->(atom? a)
+--|--|--|--|--|--|->(atom? b)
+==|==|==|==|==|=>(cond ((null? '((atom? b))) (if (atom? a) 't)) ((atom? a) (and (atom? b))) ('t ()))
+--|--|--|--|--|--|->cond
+==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+             {'options': "(((null? '()) (if (atom? b) 't)) ((atom? b) (and)) ('t ()))"}             
+
+--|--|--|--|--|--|->((null? '((atom? b))) (if (atom? a) 't))
+--|--|--|--|--|--|->((atom? a) (and (atom? b)))
+--|--|--|--|--|--|->('t ())
+==|==|==|==|==|=>(if (null? '((atom? b))) (if (atom? a) 't) (cond ((atom? a) (and (atom? b))) ('t ())))
+--|--|--|--|--|--|->if
+==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|->(null? '((atom? b)))
+--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|->'((atom? b))
+--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|->((atom? b))
+==|==|==|==|==|==|==|=>((atom? b))
+==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'x': '((atom? b))'}                                        
+
+--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|=>((atom? b))
+--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|->'t
+==|==|==|==|==|==|=>()
+--|--|--|--|--|--|->(if (atom? a) 't)
+--|--|--|--|--|--|->(cond ((atom? a) (and (atom? b))) ('t ()))
+--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                 {'options': "(('t (or (> a b))))"}                                 
+
+--|--|--|--|--|--|--|->((atom? a) (and (atom? b)))
+--|--|--|--|--|--|--|->('t ())
+==|==|==|==|==|==|=>(if (atom? a) (and (atom? b)) (cond ('t ())))
+--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|->(atom? a)
+--|--|--|--|--|--|--|--|->atom?
+==|==|==|==|==|==|==|==|=>atom? [builtin]
+--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|->(and (atom? b))
+--|--|--|--|--|--|--|--|->and
+==|==|==|==|==|==|==|==|=>(macro and (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) (and ,@(cdr vals))) ('t ())))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'a'}                                        
+                                                 ||                                                 
+                                      {'vals': '((atom? b))'}                                       
+
+--|--|--|--|--|--|--|--|->(atom? b)
+==|==|==|==|==|==|==|=>(cond ((null? '()) (if (atom? b) 't)) ((atom? b) (and)) ('t ()))
+--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+             {'options': "(((null? '()) (if (atom? b) 't)) ((atom? b) (and)) ('t ()))"}             
+
+--|--|--|--|--|--|--|--|->((null? '()) (if (atom? b) 't))
+--|--|--|--|--|--|--|--|->((atom? b) (and))
+--|--|--|--|--|--|--|--|->('t ())
+==|==|==|==|==|==|==|=>(if (null? '()) (if (atom? b) 't) (cond ((atom? b) (and)) ('t ())))
+--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|->(null? '())
+--|--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|--|->'()
+--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|->()
+==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                            {'x': '()'}                                             
+
+--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|->(if (atom? b) 't)
+--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|->(atom? b)
+--|--|--|--|--|--|--|--|--|--|->atom?
+==|==|==|==|==|==|==|==|==|==|=>atom? [builtin]
+--|--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|==|=>a
+==|==|==|==|==|==|==|==|==|=>a
+--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|->(cond ((atom? b) (and)) ('t ()))
+==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|->(cond ('t ()))
+==|==|==|==|==|==|=>t
+==|==|==|==|==|=>t
+--|--|--|--|--|->(not (or (< a b) (> a b)))
+--|--|--|--|--|--|->not
+==|==|==|==|==|==|=>(lambda (x) (null? x))
+--|--|--|--|--|--|->(or (< a b) (> a b))
+--|--|--|--|--|--|--|->or
+==|==|==|==|==|==|==|=>(macro or (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) 't) ('t (or ,@(cdr vals)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'a'}                                        
+                                                 ||                                                 
+                                   {'vals': '((< a b) (> a b))'}                                    
+
+--|--|--|--|--|--|--|->(< a b)
+--|--|--|--|--|--|--|->(> a b)
+==|==|==|==|==|==|=>(cond ((null? '((> a b))) (if (< a b) 't)) ((< a b) 't) ('t (or (> a b))))
+--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+               {'options': "(((null? '()) (if (> a b) 't)) ((> a b) 't) ('t (or)))"}                
+
+--|--|--|--|--|--|--|->((null? '((> a b))) (if (< a b) 't))
+--|--|--|--|--|--|--|->((< a b) 't)
+--|--|--|--|--|--|--|->('t (or (> a b)))
+==|==|==|==|==|==|=>(if (null? '((> a b))) (if (< a b) 't) (cond ((< a b) 't) ('t (or (> a b)))))
+--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|->(null? '((> a b)))
+--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|->'((> a b))
+--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|->((> a b))
+==|==|==|==|==|==|==|==|=>((> a b))
+==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                         {'x': '((> a b))'}                                         
+
+--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|=>((> a b))
+--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|->'t
+==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|->(if (< a b) 't)
+--|--|--|--|--|--|--|->(cond ((< a b) 't) ('t (or (> a b))))
+--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                 {'options': "(('t (or (> a b))))"}                                 
+
+--|--|--|--|--|--|--|--|->((< a b) 't)
+--|--|--|--|--|--|--|--|->('t (or (> a b)))
+==|==|==|==|==|==|==|=>(if (< a b) 't (cond ('t (or (> a b)))))
+--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|->(< a b)
+--|--|--|--|--|--|--|--|--|-><
+==|==|==|==|==|==|==|==|==|=>< [builtin]
+--|--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|=>a
+==|==|==|==|==|==|==|==|=>
+--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|->(cond ('t (or (> a b))))
+--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                 {'options': "(('t (or (> a b))))"}                                 
+
+--|--|--|--|--|--|--|--|--|->('t (or (> a b)))
+==|==|==|==|==|==|==|==|=>(if 't (or (> a b)) (cond))
+--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|->(or (> a b))
+--|--|--|--|--|--|--|--|--|--|->or
+==|==|==|==|==|==|==|==|==|==|=>(macro or (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) 't) ('t (or ,@(cdr vals)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'a'}                                        
+                                                 ||                                                 
+                                       {'vals': '((> a b))'}                                        
+
+--|--|--|--|--|--|--|--|--|--|->(> a b)
+==|==|==|==|==|==|==|==|==|=>(cond ((null? '()) (if (> a b) 't)) ((> a b) 't) ('t (or)))
+--|--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+               {'options': "(((null? '()) (if (> a b) 't)) ((> a b) 't) ('t (or)))"}                
+
+--|--|--|--|--|--|--|--|--|--|->((null? '()) (if (> a b) 't))
+--|--|--|--|--|--|--|--|--|--|->((> a b) 't)
+--|--|--|--|--|--|--|--|--|--|->('t (or))
+==|==|==|==|==|==|==|==|==|=>(if (null? '()) (if (> a b) 't) (cond ((> a b) 't) ('t (or))))
+--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|->(null? '())
+--|--|--|--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|--|--|--|->'()
+--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->()
+==|==|==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                            {'x': '()'}                                             
+
+--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|--|->(if (> a b) 't)
+--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|->(> a b)
+--|--|--|--|--|--|--|--|--|--|--|--|->>
+==|==|==|==|==|==|==|==|==|==|==|==|=>(lambda (a b) (< b a))
+--|--|--|--|--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|==|==|==|=>a
+==|==|==|==|==|==|==|==|==|==|==|=>(< b a)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'a'}                                        
+
+--|--|--|--|--|--|--|--|--|--|--|--|-><
+==|==|==|==|==|==|==|==|==|==|==|==|=>< [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|==|==|==|=>a
+--|--|--|--|--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|==|==|==|==|=>a
+--|--|--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|--|->(cond ((> a b) 't) ('t (or)))
+==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|->(cond)
+==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|=>t
+==|==|==|==|==|=>(null? x)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                             {'x': 't'}                                             
+
+--|--|--|--|--|--|->null?
+==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|->x
+==|==|==|==|==|==|=>t
+==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                             {'x': 't'}                                             
+
+--|--|--|--|--|--|->if
+==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|->x
+==|==|==|==|==|==|=>t
+--|--|--|--|--|--|->()
+--|--|--|--|--|--|->'t
+==|==|==|==|==|=>()
+--|--|--|--|--|->(cond ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b)))))
+==|==|==|==|=>()
+--|--|--|--|->node
+--|--|--|--|->(if (dfs node (cadr tree)) node (dfs node (caddr tree)))
+--|--|--|--|--|->if
+==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|->(dfs node (cadr tree))
+--|--|--|--|--|--|->dfs
+==|==|==|==|==|==|=>(lambda (node tree) (if tree (if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree))))))
+--|--|--|--|--|--|->node
+==|==|==|==|==|==|=>b
+--|--|--|--|--|--|->(cadr tree)
+--|--|--|--|--|--|--|->cadr
+==|==|==|==|==|==|==|=>(lambda (l) (car (cdr l)))
+--|--|--|--|--|--|--|->tree
+==|==|==|==|==|==|==|=>(a (b) (c))
+==|==|==|==|==|==|=>(car (cdr l))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'l': '(a (b) (c))'}                                        
+
+--|--|--|--|--|--|--|->car
+==|==|==|==|==|==|==|=>car [builtin]
+--|--|--|--|--|--|--|->(cdr l)
+--|--|--|--|--|--|--|--|->cdr
+==|==|==|==|==|==|==|==|=>cdr [builtin]
+--|--|--|--|--|--|--|--|->l
+==|==|==|==|==|==|==|==|=>(a (b) (c))
+==|==|==|==|==|==|==|=>((b) (c))
+==|==|==|==|==|==|=>(b)
+==|==|==|==|==|=>(if tree (if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                    {'tree': '(b)', 'node': 'b'}                                    
+
+--|--|--|--|--|--|->if
+==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|->tree
+==|==|==|==|==|==|=>(b)
+--|--|--|--|--|--|->(if (eq? node (car tree)) node (if (dfs node (cadr tree)) node (dfs node (caddr tree))))
+--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|->(eq? node (car tree))
+--|--|--|--|--|--|--|--|->eq?
+==|==|==|==|==|==|==|==|=>(lambda (a b) (cond ((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))))
+--|--|--|--|--|--|--|--|->node
+==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|->(car tree)
+--|--|--|--|--|--|--|--|--|->car
+==|==|==|==|==|==|==|==|==|=>car [builtin]
+--|--|--|--|--|--|--|--|--|->tree
+==|==|==|==|==|==|==|==|==|=>(b)
+==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|=>(cond ((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+
+--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+{'options': "(((and (atom? a) (atom? b)) (not (or (< a b) (> a b)))) ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b)))))"}
+
+--|--|--|--|--|--|--|--|->((and (atom? a) (atom? b)) (not (or (< a b) (> a b))))
+--|--|--|--|--|--|--|--|->((and (null? a) (null? b)) 't)
+--|--|--|--|--|--|--|--|->((or (atom? a) (atom? b)) ())
+--|--|--|--|--|--|--|--|->('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))
+==|==|==|==|==|==|==|=>(if (and (atom? a) (atom? b)) (not (or (< a b) (> a b))) (cond ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b))))))
+--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|->(and (atom? a) (atom? b))
+--|--|--|--|--|--|--|--|--|->and
+==|==|==|==|==|==|==|==|==|=>(macro and (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) (and ,@(cdr vals))) ('t ())))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                 {'vals': '((atom? a) (atom? b))'}                                  
+
+--|--|--|--|--|--|--|--|--|->(atom? a)
+--|--|--|--|--|--|--|--|--|->(atom? b)
+==|==|==|==|==|==|==|==|=>(cond ((null? '((atom? b))) (if (atom? a) 't)) ((atom? a) (and (atom? b))) ('t ()))
+--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+             {'options': "(((null? '()) (if (atom? b) 't)) ((atom? b) (and)) ('t ()))"}             
+
+--|--|--|--|--|--|--|--|--|->((null? '((atom? b))) (if (atom? a) 't))
+--|--|--|--|--|--|--|--|--|->((atom? a) (and (atom? b)))
+--|--|--|--|--|--|--|--|--|->('t ())
+==|==|==|==|==|==|==|==|=>(if (null? '((atom? b))) (if (atom? a) 't) (cond ((atom? a) (and (atom? b))) ('t ())))
+--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|->(null? '((atom? b)))
+--|--|--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|--|--|->'((atom? b))
+--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|->((atom? b))
+==|==|==|==|==|==|==|==|==|==|=>((atom? b))
+==|==|==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'x': '((atom? b))'}                                        
+
+--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|==|=>((atom? b))
+--|--|--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|--|--|->'t
+==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|->(if (atom? a) 't)
+--|--|--|--|--|--|--|--|--|->(cond ((atom? a) (and (atom? b))) ('t ()))
+--|--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                 {'options': "(('t (or (> a b))))"}                                 
+
+--|--|--|--|--|--|--|--|--|--|->((atom? a) (and (atom? b)))
+--|--|--|--|--|--|--|--|--|--|->('t ())
+==|==|==|==|==|==|==|==|==|=>(if (atom? a) (and (atom? b)) (cond ('t ())))
+--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|->(atom? a)
+--|--|--|--|--|--|--|--|--|--|--|->atom?
+==|==|==|==|==|==|==|==|==|==|==|=>atom? [builtin]
+--|--|--|--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|--|--|->(and (atom? b))
+--|--|--|--|--|--|--|--|--|--|--|->and
+==|==|==|==|==|==|==|==|==|==|==|=>(macro and (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) (and ,@(cdr vals))) ('t ())))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                      {'vals': '((atom? b))'}                                       
+
+--|--|--|--|--|--|--|--|--|--|--|->(atom? b)
+==|==|==|==|==|==|==|==|==|==|=>(cond ((null? '()) (if (atom? b) 't)) ((atom? b) (and)) ('t ()))
+--|--|--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+             {'options': "(((null? '()) (if (atom? b) 't)) ((atom? b) (and)) ('t ()))"}             
+
+--|--|--|--|--|--|--|--|--|--|--|->((null? '()) (if (atom? b) 't))
+--|--|--|--|--|--|--|--|--|--|--|->((atom? b) (and))
+--|--|--|--|--|--|--|--|--|--|--|->('t ())
+==|==|==|==|==|==|==|==|==|==|=>(if (null? '()) (if (atom? b) 't) (cond ((atom? b) (and)) ('t ())))
+--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|->(null? '())
+--|--|--|--|--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|--|--|--|--|->'()
+--|--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|->()
+==|==|==|==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                            {'x': '()'}                                             
+
+--|--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|--|--|->(if (atom? b) 't)
+--|--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->(atom? b)
+--|--|--|--|--|--|--|--|--|--|--|--|--|->atom?
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>atom? [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|--|--|->(cond ((atom? b) (and)) ('t ()))
+==|==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|--|->(cond ('t ()))
+==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|->(not (or (< a b) (> a b)))
+--|--|--|--|--|--|--|--|--|->not
+==|==|==|==|==|==|==|==|==|=>(lambda (x) (null? x))
+--|--|--|--|--|--|--|--|--|->(or (< a b) (> a b))
+--|--|--|--|--|--|--|--|--|--|->or
+==|==|==|==|==|==|==|==|==|==|=>(macro or (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) 't) ('t (or ,@(cdr vals)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                   {'vals': '((< a b) (> a b))'}                                    
+
+--|--|--|--|--|--|--|--|--|--|->(< a b)
+--|--|--|--|--|--|--|--|--|--|->(> a b)
+==|==|==|==|==|==|==|==|==|=>(cond ((null? '((> a b))) (if (< a b) 't)) ((< a b) 't) ('t (or (> a b))))
+--|--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+               {'options': "(((null? '()) (if (> a b) 't)) ((> a b) 't) ('t (or)))"}                
+
+--|--|--|--|--|--|--|--|--|--|->((null? '((> a b))) (if (< a b) 't))
+--|--|--|--|--|--|--|--|--|--|->((< a b) 't)
+--|--|--|--|--|--|--|--|--|--|->('t (or (> a b)))
+==|==|==|==|==|==|==|==|==|=>(if (null? '((> a b))) (if (< a b) 't) (cond ((< a b) 't) ('t (or (> a b)))))
+--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|->(null? '((> a b)))
+--|--|--|--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|--|--|--|->'((> a b))
+--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->((> a b))
+==|==|==|==|==|==|==|==|==|==|==|=>((> a b))
+==|==|==|==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                         {'x': '((> a b))'}                                         
+
+--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|==|==|=>((> a b))
+--|--|--|--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|--|--|--|->'t
+==|==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|--|->(if (< a b) 't)
+--|--|--|--|--|--|--|--|--|--|->(cond ((< a b) 't) ('t (or (> a b))))
+--|--|--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                 {'options': "(('t (or (> a b))))"}                                 
+
+--|--|--|--|--|--|--|--|--|--|--|->((< a b) 't)
+--|--|--|--|--|--|--|--|--|--|--|->('t (or (> a b)))
+==|==|==|==|==|==|==|==|==|==|=>(if (< a b) 't (cond ('t (or (> a b)))))
+--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|->(< a b)
+--|--|--|--|--|--|--|--|--|--|--|--|-><
+==|==|==|==|==|==|==|==|==|==|==|==|=>< [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|==|==|==|==|=>
+--|--|--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|--|->(cond ('t (or (> a b))))
+--|--|--|--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                 {'options': "(('t (or (> a b))))"}                                 
+
+--|--|--|--|--|--|--|--|--|--|--|--|->('t (or (> a b)))
+==|==|==|==|==|==|==|==|==|==|==|=>(if 't (or (> a b)) (cond))
+--|--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|--|--|--|->(or (> a b))
+--|--|--|--|--|--|--|--|--|--|--|--|--|->or
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>(macro or (vals) `(cond ((null? ',(cdr vals)) (if ,(car vals) 't)) (,(car vals) 't) ('t (or ,@(cdr vals)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+                                       {'vals': '((> a b))'}                                        
+
+--|--|--|--|--|--|--|--|--|--|--|--|--|->(> a b)
+==|==|==|==|==|==|==|==|==|==|==|==|=>(cond ((null? '()) (if (> a b) 't)) ((> a b) 't) ('t (or)))
+--|--|--|--|--|--|--|--|--|--|--|--|--|->cond
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>(macro cond (options) (if (car options) `(if ,(caar options) ,(cadar options) (cond ,@(cdr options)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+                                                 ||                                                 
+               {'options': "(((null? '()) (if (> a b) 't)) ((> a b) 't) ('t (or)))"}                
+
+--|--|--|--|--|--|--|--|--|--|--|--|--|->((null? '()) (if (> a b) 't))
+--|--|--|--|--|--|--|--|--|--|--|--|--|->((> a b) 't)
+--|--|--|--|--|--|--|--|--|--|--|--|--|->('t (or))
+==|==|==|==|==|==|==|==|==|==|==|==|=>(if (null? '()) (if (> a b) 't) (cond ((> a b) 't) ('t (or))))
+--|--|--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|->(null? '())
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->'()
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->()
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                            {'x': '()'}                                             
+
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|--|--|--|--|--|->(if (> a b) 't)
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->(> a b)
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->>
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>(lambda (a b) (< b a))
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>(< b a)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                        {'a': 'b', 'b': 'b'}                                        
+
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|-><
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>< [builtin]
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->b
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|->a
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>b
+==|==|==|==|==|==|==|==|==|==|==|==|==|==|=>
+--|--|--|--|--|--|--|--|--|--|--|--|--|--|->'t
+==|==|==|==|==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|--|--|--|--|->(cond ((> a b) 't) ('t (or)))
+==|==|==|==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|--|--|--|->(cond)
+==|==|==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|=>(null? x)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                            {'x': '()'}                                             
+
+--|--|--|--|--|--|--|--|--|->null?
+==|==|==|==|==|==|==|==|==|=>(lambda (x) (if x () 't))
+--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|=>()
+==|==|==|==|==|==|==|==|=>(if x () 't)
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                            {'x': '()'}                                             
+
+--|--|--|--|--|--|--|--|--|->if
+==|==|==|==|==|==|==|==|==|=>if [builtin]
+--|--|--|--|--|--|--|--|--|->x
+==|==|==|==|==|==|==|==|==|=>()
+--|--|--|--|--|--|--|--|--|->()
+--|--|--|--|--|--|--|--|--|->'t
+--|--|--|--|--|--|--|--|--|--|->quote
+==|==|==|==|==|==|==|==|==|==|=>quote [builtin]
+--|--|--|--|--|--|--|--|--|--|->t
+==|==|==|==|==|==|==|==|==|=>t
+==|==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|--|->(cond ((and (null? a) (null? b)) 't) ((or (atom? a) (atom? b)) ()) ('t (and (eq? (car a) (car b)) (eq? (cdr a) (cdr b)))))
+==|==|==|==|==|==|==|=>t
+--|--|--|--|--|--|--|->node
+==|==|==|==|==|==|==|=>b
+--|--|--|--|--|--|--|->(if (dfs node (cadr tree)) node (dfs node (caddr tree)))
+==|==|==|==|==|==|=>b
+==|==|==|==|==|=>b
+--|--|--|--|--|->node
+==|==|==|==|==|=>b
+--|--|--|--|--|->(dfs node (caddr tree))
+==|==|==|==|=>b
+==|==|==|=>b
+==|==|=>b
+--|--|->(list)
+--|--|--|->list
+==|==|==|=>(macro list (alist) (if alist `(cons ,(car alist) (list ,@(cdr alist)))))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                    {'the_tree': '(a (b) (c))'}                                     
+                                                 ||                                                 
+                                          {'alist': '()'}                                           
+
+==|==|=>()
+==|=>(b)
+=>(if (cdr l) (last (cdr l)) (car l))
+
+                                       {DEFAULT ENVIRONMENT}                                        
+                                                 ||                                                 
+                                            {'l': '(b)'}                                            
+
+--|->if
+==|=>if [builtin]
+--|->(cdr l)
+--|--|->cdr
+==|==|=>cdr [builtin]
+--|--|->l
+==|==|=>(b)
+==|=>()
+--|->(last (cdr l))
+--|->(car l)
+--|--|->car
+==|==|=>car [builtin]
+--|--|->l
+==|==|=>(b)
+==|=>b
+=>b
+b

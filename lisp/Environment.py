@@ -343,10 +343,13 @@ class MacroEnvironment(BaseEnvironment):
         self._define_atom()
         
         self._define_quasiquote()
+        
         self._define_subtract()
         self._define_lessthan()
+        
         self._define_print_sym()
         self._define_input_char()
+
         self._define_gensym()
 
         self.libs = ["macrostdlib.lisp", "stdlib.lisp"]

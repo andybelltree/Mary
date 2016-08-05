@@ -8,6 +8,15 @@ class EvalHistory(object):
         self.result = None
         self.eval_env = None
 
+    def print_envs(self):
+        """Print the environments created to evaluate this expression"""
+        if self.eval_env:
+            print("\n" + str(self.eval_env) + "\n")
+        if self.result:
+            for child in self.children:
+                child.eval_hist.print_envs()
+            self.result.eval_hist.print_envs()
+
     def print_eval(self, depth, verbose=False, char='-'):
         """Print all steps taken to evaluate this expression"""
         print((char * 2 + "|") * (depth-1) + char + ">" + str(self.lisp_exp))
