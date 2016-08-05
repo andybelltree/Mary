@@ -1,0 +1,8 @@
+#! /bin/bash
+cd libs
+LIBS=*
+for lib in $LIBS
+do
+	../calculate_dependencies.py $lib ../$lib
+done
+cd ..
