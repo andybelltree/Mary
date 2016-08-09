@@ -1,7 +1,13 @@
-# Based heavily on parser.py by kvalle @
-# https://github.com/kvalle/root-lisp/
+""" 
+Parser which takes a source string and returns an abstract syntax Tree
+represented as LispExpressions. If multiple expressions are expected a list
+of ASTs are returned.
+To get the result of the parsed string call parser.result()
+Based heavily on parser.py by kvalle @
+https://github.com/kvalle/root-lisp/
+"""
 import re
-from .LispExpression import *
+from .LispExpression import LispExpression, ListExpression, SymbolExpression
 
 SPECIAL_SYNTAX = {
     "'":"quote",
@@ -44,7 +50,7 @@ class Parser(object):
         """Parses a single expression into the Abstract Syntax Tree"""
         exp, rest = self._partition_exp(source)
         if rest:
-            raise SyntaxError('Expected EOF')
+            raise SyntaxError('Expected EOF. Check your brackets.')
         if len(exp) > 1 and exp[:2] in self._syntax:
             return ListExpression([SymbolExpression(
                 self._syntax[exp[:2]]), self._parse(exp[2:])])

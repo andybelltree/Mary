@@ -1,7 +1,8 @@
 """Keeps track of history of evaluation"""
 
 class EvalHistory(object):
-    # Following are for storing debug information
+    """A class for storing the evaluation history of an expresion for stack
+    tracing and debugging feedback"""
     def __init__(self, lisp_expression):
         self.lisp_exp = lisp_expression
         self.children = []
@@ -18,7 +19,8 @@ class EvalHistory(object):
             self.result.eval_hist.print_envs()
 
     def print_eval(self, depth, verbose=False, char='-'):
-        """Print all steps taken to evaluate this expression"""
+        """Print all steps taken to evaluate this expression. If verbose, will print out
+        all evaluation environments"""
         print((char * 2 + "|") * (depth-1) + char + ">" + str(self.lisp_exp))
         if verbose and self.eval_env:
             print("\n" + str(self.eval_env) + "\n")
@@ -43,10 +45,13 @@ class EvalHistory(object):
             self.result.eval_hist.print_macros(depth)
 
     def add_children(self, children):
+        """Adds children (eg. arguments to the expression which need evaluation)"""
         self.children += children
 
     def add_result(self, result):
+        """Adds a resulting expression - the result of this expression's evaluation"""
         self.result = result
 
     def add_env(self, env):
+        """Adds an environment to this expression"""
         self.eval_env = env

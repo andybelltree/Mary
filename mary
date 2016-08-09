@@ -1,27 +1,44 @@
 #!/usr/bin/env python3
+"""
+Runs mary with optional arguments. By default will start a repl in the default environment
+Arguments:
 
-from util import *
-from lisp.interpreter import Interpreter
+-c Runs without the standard library
+-v Gives verbose error reporting
+-r <i> Sets maximum recursion depth to i (where i is an integer)
+-m Outputs information about macroexpansion
+-e Outputs information about the environment
+-d Outputs evaluation history (Lisp stack trace)
+-f <file_name> Interpreters file instead of starting the repl
+-a <macros|default|min> Chooses set of axioms to run on
+"""
+
 from os.path import dirname, join
 import sys
 import argparse
-from lisp.Environment import *
+from util import repl, interpret_file
 
+from lisp.interpreter import Interpreter
+from lisp.Environment import MacroEnvironment, MinimumEnvironment, \
+PythonEnvironment, DefaultEnvironment
 
 def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-e', help='get environment output', action='store_true', default=False)
     parser.add_argument('-m', help='get macroexpansion output', action='store_true', default=False)
-    parser.add_argument('-c', help='clear environment. Don\'t read in stdlib first', action='store_true', default=False)
-    parser.add_argument('-v', help='get verbose error reporting', action='store_true', default=False)
+    parser.add_argument(
+        '-c', help='clear environment. Don\'t read in stdlib first',
+        action='store_true', default=False)
+    parser.add_argument(
+        '-v', help='get verbose error reporting', action='store_true', default=False)
     parser.add_argument('-r', help='set maximum recursion depth of python', type=int, default=1000)
     parser.add_argument('-d', help='get evaluation history', action='store_true', default=False)
     parser.add_argument('-f', help='file to interpret')
     parser.add_argument('-a', help='Axioms - options: macros, default, min')
 
     args = parser.parse_args()
-    
+
     sys.setrecursionlimit(args.r)
 
     if args.a == 'macros':
@@ -41,4 +58,5 @@ def main():
     else:
         print(interpret_file(args.f, interpreter))
 
-main()
+if __name__ == "__main__":
+    main()

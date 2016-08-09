@@ -1,5 +1,8 @@
-from lisp.interpreter import Interpreter
-from lisp.LispErrors import *
+"""
+Provides utility functions for Mary. These include the repl (Read, Eval, Print Loop)
+and a file interpreter.
+"""
+
 import readline
 import sys
 import traceback
@@ -7,6 +10,8 @@ import traceback
 import code
 import atexit
 import os
+
+from lisp.LispErrors import LispError
 
 PROMPT = "> "
 KEYWORDS = {"import":"import",
@@ -38,7 +43,7 @@ def interpret_file(filename, interpreter, all_results=False):
     """Run interpreter on a file"""
     with open(filename, 'r') as f:
         results = interpreter.evaluate(f.read())
-    return "\n".join([str(result) for result in results]) if all_results else str(results[-1]) 
+    return "\n".join([str(result) for result in results]) if all_results else str(results[-1])
 
 def resolve_keyword(keyword, line, interpreter):
     """Performs commands associated with keywords
@@ -47,7 +52,7 @@ def resolve_keyword(keyword, line, interpreter):
     quit, exit, q : exit the repl
     (macros|environments|debug) (on|off) : change feedback level
     mode : display current mode
-    
+
     """
     if KEYWORDS[keyword] == "quit":
         exit(0)
@@ -62,14 +67,13 @@ def resolve_keyword(keyword, line, interpreter):
             if argument not in {"on", "off"}:
                 raise KeywordError(keyword, "Argument must be 'on' or 'off'.")
             if (argument == "on") != interpreter.mode()[keyword]:
-                interpreter.toggle(keyword)                
+                interpreter.toggle(keyword)
         else:
             raise KeywordError(keyword, "No Argument provided")
 
 
-def repl(interpreter=None, error_report=False):
+def repl(interpreter, error_report=False):
     """Run a read, eval, print loop"""
-    interpreter = Interpreter() if interpreter is None else interpreter
     hist_file = os.path.expanduser("~/.mary-history")
     init_history(hist_file)
     while True:

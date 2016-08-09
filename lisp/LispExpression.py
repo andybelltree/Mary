@@ -1,3 +1,23 @@
+"""
+Defines Lisp Expression objects to be evaluated. Basic hierarchy of inheritance is as
+follows:
+
+                          +---------------+
+                          |LispExpression |
+                          +--------+------+
+            +----------------^     ^    ^----------------+
+            |                      |                     |
+    +-------+--------+     +-------+------+    +---------+--------------+
+    |SymbolExpression|     |ListExpression|    |ApplicableLispExpression|
+    +--+-------------+     +--------------+    +------------------------+
+       ^   ^-------------+                    +-^         ^  ^------------------+
+       |                 |                    |           |                     |
++------+-------+ +-------+---------+ +--------+------+ +--+-------------+ +-----+------+
+|AtomExpression| |NumberExpression | |MacroExpression| |LambdaExpression| |LispFunction|
++--------------+ +-----------------+ +---------------+ +----------------+ +------------+
+
+"""
+
 from abc import ABCMeta, abstractmethod
 from .LispErrors import *
 from .EvalHistory import EvalHistory
@@ -77,6 +97,7 @@ class LispExpression(metaclass=ABCMeta):
 
 
 class AtomExpression(LispExpression):
+    """An atom expression"""
     def __init__(self, value):
         super(AtomExpression, self).__init__(value)
 
@@ -109,7 +130,7 @@ class AtomExpression(LispExpression):
 
     
 class SymbolExpression(AtomExpression):
-    """A symbol"""
+    """A symbol. (Any atom which isn't a number)."""
     def evaluate(self, environment):
         """Look up the value in the environment and return"""
         return self.track_result(environment.retrieve_definition(self).copy())
@@ -175,19 +196,22 @@ class ApplicableLispExpression(LispExpression):
         raise NotImplementedError
 
 class LispFunction(ApplicableLispExpression):
-    """A lisp function"""
-    def __init__(self, name, definition):
+    """A  built in lisp function"""
+    def __init__(self, name, definition, num_expected_args=None):
         super(LispFunction, self).__init__([Nils.nil, definition], None)
+        self.num_expected_args = num_expected_args
         self.name = name
         
     def apply_to(self, args, environment, caller):
         """Call function on arguments in environment. Eval info is stored with caller for
         debugging purposes"""
+        if self.num_expected_args and len(args.value) < self.num_expected_args:
+            raise WrongNumParamsError(self.name, self.num_expected_args, len(args.value))
         return caller.track_result(self.body(args.value, environment))
 
     def copy(self):
         """Create a copy of this function"""
-        return self.__class__(self.name, self.body)
+        return self.__class__(self.name, self.body, self.num_expected_args)
 
     def __repr__(self):
         return self.name + " [builtin]"
@@ -224,7 +248,8 @@ class LambdaExpression(ApplicableLispExpression):
         )
 
 class MacroExpression(ApplicableLispExpression):
-    """A macro"""
+    """A macro. These will be applied to their arguments before their arguments are evaluated, then
+    the result will be interpreted"""
     def __init__(self, value, name, variable_param = None):
         super(MacroExpression, self).__init__(value, variable_param)
         self.name = name

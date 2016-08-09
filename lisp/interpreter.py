@@ -1,5 +1,11 @@
-from .parser import *
-from .LispExpression import *
+"""
+An interpreter. Parses a string then evaluates it.
+Has an environment in which it calls each expression. Subsequent
+calls to evaluate new expressions will be called in the same environment.
+"""
+
+
+from .parser import Parser
 from .Environment import DefaultEnvironment
 import sys
 
@@ -40,6 +46,7 @@ class Interpreter(object):
                 "debug":self.eval_history}
                 
     def interpret_expression(self, expr):
+        """Interpret the given expression and return the result"""
         try:
             result = expr.evaluate(self.env)
             if self.env_output and not self.eval_history:
