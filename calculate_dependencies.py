@@ -14,9 +14,12 @@ import sys
 from collections import deque
 
 def main(args):
+    if len(args) < 3:
+        print("Usage: {} <filein> <fileout>".format(args[0]))
+        exit(0)
     try:
         filein = open(args[1], 'r')
-    except Exception as e:
+    except IOError as error:
         print("Usage: {} <filein> <fileout>".format(args[0]))
         exit(0)
     src = filein.read()
@@ -40,10 +43,10 @@ def main(args):
 
     for definition in definitions:
         visit(definition)
-        
+
     try:
         fileout = open(args[2], 'w')
-    except Exception as e:
+    except IOError as error:
         print("Usage: {} <filein> <fileout>".format(args[0]))
         exit(0)
 
@@ -53,6 +56,7 @@ def main(args):
     fileout.close()
 
 class FunctionDefinition():
+    """For storing a function definition"""
     all_definitions = {}
     def __init__(self, definition):
         self.name = str(definition.cdr().car())
@@ -118,7 +122,8 @@ class FunctionDefinition():
     def write_to_file(self, fileout):
         fileout.write(";; {} \n".format(self.name))
         fileout.write(";; DEPENDENCIES: {}\n".format(", ".join(list(self.dependencies))))
-        fileout.write(";; DEPENDED ON BY: {}\n".format(", ".join([func.name for func in self.dependent_on])))
+        fileout.write(";; DEPENDED ON BY: {}\n".format(
+            ", ".join([func.name for func in self.dependent_on])))
         fileout.write(str(self.definition) + "\n\n")
 
     
