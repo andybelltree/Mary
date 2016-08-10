@@ -1,16 +1,2 @@
-
-#repl#
-
-*.py#
-
-#repl#
-
-lisp/.#Environment.py
-
-lisp/__pycache__/Environment.cpython-34.pyc
-
-*.pyc
-
-*.lisp#
-
+*#
 *.pyc
