@@ -1,7 +1,13 @@
-# Based heavily on parser.py by kvalle @
-# https://github.com/kvalle/root-lisp/
+""" 
+Parser which takes a source string and returns an abstract syntax Tree
+represented as LispExpressions. If multiple expressions are expected a list
+of ASTs are returned.
+To get the result of the parsed string call parser.result()
+Based heavily on parser.py by kvalle @
+https://github.com/kvalle/root-lisp/
+"""
 import re
-from .LispExpression import *
+from .LispExpression import LispExpression, ListExpression, SymbolExpression
 
 SPECIAL_SYNTAX = {
     "'":"quote",
@@ -44,7 +50,7 @@ class Parser(object):
         """Parses a single expression into the Abstract Syntax Tree"""
         exp, rest = self._partition_exp(source)
         if rest:
-            raise SyntaxError('Expected EOF')
+            raise SyntaxError('Expected EOF. Check your brackets.')
         if len(exp) > 1 and exp[:2] in self._syntax:
             return ListExpression([SymbolExpression(
                 self._syntax[exp[:2]]), self._parse(exp[2:])])
@@ -55,11 +61,7 @@ class Parser(object):
             end = self._find_matching_paren(exp)
             return ListExpression([self._parse(e) for e in self._split_exps(exp[1:end])])
         else:
-            try:
-                float(exp)
-                return NumberExpression(exp)
-            except ValueError:
-                return SymbolExpression(exp)
+            return LispExpression.create_atom(exp)
             return exp
 
     def _parse_multiple(self, source):
@@ -118,9 +120,6 @@ class Parser(object):
     def result(self):
         return self._result
 
-    def unparsed_result(self):
-        return unparse(self._result)
-
 def strip_comments(source):
     output = []
     for line in source.split("\n"):
@@ -134,6 +133,4 @@ def strip_comments(source):
         output.append(next_line)
     transform = "\n".join(output)
     return transform
-    
-def unparse(result):
-    return str(result)
+

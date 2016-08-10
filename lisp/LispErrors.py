@@ -1,3 +1,5 @@
+"""Errors specific to Lisp interpretation"""
+
 class LispError(Exception):
     """Generic Lisp interpretation error"""
     def __init__(self):

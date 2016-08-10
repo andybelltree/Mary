@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from os.path import dirname, join
 from os import listdir
@@ -20,6 +20,7 @@ def extract_comments(filename):
 
 def runtest(interpreter, testfile, testname):
     diff = Differ()
+    print("** Results of {} **".format(testname))
     try:
         results = interpret_file(testfile, interpreter, True).splitlines()
     except RuntimeError:
@@ -29,16 +30,20 @@ def runtest(interpreter, testfile, testname):
     else:
         expected_results = extract_comments(testfile).splitlines()
         d = list(diff.compare(expected_results, results))
-        print("** Results of {} **".format(testname))
-        #i = 0
-        #row = 0
         found_diff = False
+        bad_rows = []
         for row in d:
             if not(row.strip() == "" or row.startswith(" ")):
-                found_diff = True
-                print(row)
-        if not found_diff:
+                print("#", end="")
+                bad_rows.append(row)
+            else:
+                print(".", end="")
+        print()
+        if len(bad_rows) == 0:
             print("Output matches expected")
+        else:
+            for bad_row in bad_rows:
+                print(bad_row)
         print()
     
 def main():
@@ -48,12 +53,15 @@ def main():
     testfiles = [(join(testdir, filename), filename[:-5]) for filename in listdir(testdir) if filename.endswith(".lisp")]
     mintestfiles = [(join(mintestdir, filename), filename[:-5]) for filename in listdir(mintestdir) if filename.endswith(".lisp")]
 
-    for interpreter, title, lib, files in [(Interpreter(DefaultEnvironment()), "With defun:", "stdlib.lisp", testfiles),
-                                    (Interpreter(MacroEnvironment()), "Without defun:", "macrostdlib.lisp", testfiles),
-                                    (Interpreter(MinimumEnvironment()), "Minimal Lisp:", "minstdlib.lisp", mintestfiles)]:
-        print(title)
+    for env, title, files in [(DefaultEnvironment(), "With defun:", testfiles),
+                                    (MacroEnvironment(), "Without defun:", testfiles),
+                                    (MinimumEnvironment(), "Minimal Lisp:", mintestfiles)]:
+        interpreter = Interpreter(env)
+        libs = env.libs
+        print("="*5 + title + "="*5 + "\n")
         for testfile, testname in files:
-            interpret_file(join(dirname(__file__), lib), interpreter)
+            for lib in libs:
+                interpret_file(join(dirname(__file__), lib), interpreter)
             runtest(interpreter, testfile, testname)
 
 if __name__ == "__main__":

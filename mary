@@ -1,41 +1,62 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+"""
+Runs mary with optional arguments. By default will start a repl in the default environment
+Arguments:
 
-from util import *
-from lisp.interpreter import Interpreter
+-c Runs without the standard library
+-v Gives verbose error reporting
+-r <i> Sets maximum recursion depth to i (where i is an integer)
+-m Outputs information about macroexpansion
+-e Outputs information about the environment
+-d Outputs evaluation history (Lisp stack trace)
+-f <file_name> Interpreters file instead of starting the repl
+-a <macros|default|min> Chooses set of axioms to run on
+"""
+
 from os.path import dirname, join
 import sys
 import argparse
-from lisp.Environment import *
+from util import repl, interpret_file
 
+from lisp.interpreter import Interpreter
+from lisp.Environment import MacroEnvironment, MinimumEnvironment, \
+PythonEnvironment, DefaultEnvironment
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-v', help='get verbose debug output', action='store_true', default=False)
-parser.add_argument('-m', help='get macroexpansion output', action='store_true', default=False)
-parser.add_argument('-c', help='clear environment. Don\'t read in stdlib first', action='store_true', default=False)
-parser.add_argument('-e', help='get verbose error reporting', action='store_true', default=False)
-parser.add_argument('-r', help='set recursion depth of python', type=int, default=1000)
-parser.add_argument('-d', help='get evaluation history', action='store_true', default=False)
-parser.add_argument('-f', help='file to interpret')
-parser.add_argument('-a', help='Axioms - options: macros, default, min')
+def main():
+    parser = argparse.ArgumentParser()
 
-args = parser.parse_args()
+    parser.add_argument('-e', help='get environment output', action='store_true', default=False)
+    parser.add_argument('-m', help='get macroexpansion output', action='store_true', default=False)
+    parser.add_argument(
+        '-c', help='clear environment. Don\'t read in stdlib first',
+        action='store_true', default=False)
+    parser.add_argument(
+        '-v', help='get verbose error reporting', action='store_true', default=False)
+    parser.add_argument('-r', help='set maximum recursion depth of python', type=int, default=1000)
+    parser.add_argument('-d', help='get evaluation history', action='store_true', default=False)
+    parser.add_argument('-f', help='file to interpret')
+    parser.add_argument('-a', help='Axioms - options: macros, default, min')
 
-sys.setrecursionlimit(args.r)
+    args = parser.parse_args()
 
-if args.a == 'macros':
-    env = MacroEnvironment()
-    lib = "macrostdlib.lisp"
-elif args.a == 'min':
-    env = MinimumEnvironment()
-    lib = "minstdlib.lisp"
-else:
-    env = DefaultEnvironment()
-    lib = "stdlib.lisp"
+    sys.setrecursionlimit(args.r)
 
-interpr = Interpreter(env, args.v, args.m, args.d)
-if not args.c:
-    interpret_file(join(dirname(__file__), lib), interpr)
-if not args.f:
-    repl(interpr, args.e)
-else:
-    print(interpret_file(args.f, interpr))
+    if args.a == 'macros':
+        env = MacroEnvironment()
+    elif args.a == 'min':
+        env = MinimumEnvironment()
+    elif args.a == 'py':
+        env = PythonEnvironment()
+    else:
+        env = DefaultEnvironment()
+    interpreter = Interpreter(env, args.e, args.m, args.d)
+    if not args.c:
+        for lib in env.libs:
+            interpret_file(join(dirname(__file__), lib), interpreter)
+    if not args.f:
+        repl(interpreter, args.v)
+    else:
+        print(interpret_file(args.f, interpreter))
+
+if __name__ == "__main__":
+    main()

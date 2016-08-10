@@ -1,3 +1,12 @@
+"""
+An environment in which to evaluate a LispExpression. Each environment has a set of symbols
+which correspond to a LispExpression.
+
+Contains default environments which define sets of axioms. To create a new default environment
+with different axioms, inherit from the BaseEnvironment class and implement the _define_defaults
+method. This should be used to define any axioms one wants. Either make calls to existing definitions or
+write your own.
+"""
 from .LispErrors import *
 from .LispExpression import *
 from functools import reduce
@@ -10,7 +19,7 @@ IF = "if"
 CAR = "car"
 CDR = "cdr"
 CONS = "cons"
-ATOM = "atom?"
+IS_ATOM = "atom?"
 
 SUBTRACT = "-"
 LESSTHAN = "<"
@@ -26,6 +35,8 @@ GENSYM = "gensym"
 GENSYM_ESCAPE = "#"
 
 DEFUN = "defun"
+
+PYCALL = "pycall"
         
 class Environment(object):
     """An environment of definitions in which to interpret a Lisp Expression"""
@@ -33,11 +44,14 @@ class Environment(object):
         """Initialises the environment with its parent and an empty set of definitions"""
         self.parent_environment = parent_environment
         self.definitions = {}
+        self.libs = []
 
     def retrieve_definition(self, label):
         """Get definition of label in environment if it exists"""
+        if not type(label) == SymbolExpression:
+            raise TypeError("definition retrieval", label, "Symbol Expression")
         if label.value in self.definitions:
-            return self.definitions[label.value].copy()
+            return self.definitions[label.value]
         elif self.parent_environment:
             return self.parent_environment.retrieve_definition(label)
         else:
@@ -46,7 +60,10 @@ class Environment(object):
 
     def define(self, label, value):
         """Define a new function or value"""
+        if not type(label) == SymbolExpression:
+            raise TypeError("definition", label, "Symbol Expression")
         self.definitions[label.value] = value
+        return label
 
     def create_child(self):
         return Environment(self)
@@ -54,7 +71,7 @@ class Environment(object):
     def __repr__(self):
         """Useful for debugging."""
         form_str = "{:^100}"
-        if type(self) == DefaultEnvironment:
+        if issubclass(self.__class__, BaseEnvironment):
             return form_str.format("{DEFAULT ENVIRONMENT}")
         return (
             "" if self.parent_environment is None else ("{}\n"+form_str+"\n"+form_str).format(
@@ -75,13 +92,8 @@ class BaseEnvironment(Environment):
     def _define_defmacro(self):
         """Defines the defmacro function"""
         def defmacro(args, env):
-            if len(args) < 3:
-                raise WrongNumParamsError(DEFMACRO, 3, len(args))
-            else:
-                env.define(
-                    args[0], MacroExpression(args[1:], args[0]))
-                return args[0]
-        self.define(SymbolExpression(DEFMACRO), LispFunction(DEFMACRO, defmacro))
+            return env.define(args[0], MacroExpression(args[1:], args[0]))
+        self.define(SymbolExpression(DEFMACRO), LispFunction(DEFMACRO, defmacro, 3))
 
     def _define_lambda(self):
         """Defines the lambda function"""
@@ -92,27 +104,20 @@ class BaseEnvironment(Environment):
     def _define_defun(self):
         """Defines function definition"""
         def defun(args, env):
-            if len(args) < 3:
-                raise WrongNumParamsError(DEFUN, 3, len(args))
-            else:
-                env.define(
-                    args[0], LambdaExpression(args[1:], env))
-                return args[0]
-        self.define(SymbolExpression(DEFUN), LispFunction(DEFUN, defun))
+            return env.define(args[0], LambdaExpression(args[1:], env))
+        self.define(SymbolExpression(DEFUN), LispFunction(DEFUN, defun, 3))
 
     def _define_quote(self):
         """Defines the quote function"""
         def quote(args, env):
             return args[0]
-        self.define(SymbolExpression(QUOTE), LispFunction(QUOTE, quote))
+        self.define(SymbolExpression(QUOTE), LispFunction(QUOTE, quote, 1))
 
 
     def _define_quasiquote(self):
         """Defines backquote"""
         def quasiquote(args, env):
             """Backquote function for quasiquote read macro"""
-            if len(args) < 1:
-                raise WrongNumParamsError(QUASIQUOTE, 1, len(args))
             def quasiquote_expand(args, backquotes):
                 """Called recursively by backquote function
                 Returns True or false depending on whether results should be 
@@ -126,12 +131,8 @@ class BaseEnvironment(Environment):
                 elif tagged(args, UNQUOTE):                    
                     # If you see a comma, begin evaluation again, then put it in a list
                     result = quasiquote_expand(tagged_data(args), backquotes-1)
-
                     # Special case: The layer below is a splice, which means this comma
                     # needs to be applied to each item in the resulting list.
-                    # From Bawden "Intuitively, an atsign has the eect of causing the
-                    # comma to be mapped over the elements of the value
-                    # of the following expression.
                     if not tagged_data(args).atom() and tagged(tagged_data(args), SPLICE):
                         return ListExpression([tag(UNQUOTE, exp) for exp in result.value])
                     else:
@@ -149,7 +150,6 @@ class BaseEnvironment(Environment):
                             reduce(lambda x,y: x+quasiquote_expand(y, backquotes).value,
                                    args.value,
                                    [])))
-
 
             def tagged(args, tag):
                 """True iff data has given tag"""
@@ -170,97 +170,72 @@ class BaseEnvironment(Environment):
             return quasiquote_expand(args[0], 1).car()
 
 
-        self.define(SymbolExpression(QUASIQUOTE), LispFunction(QUASIQUOTE, quasiquote))
+        self.define(SymbolExpression(QUASIQUOTE), LispFunction(QUASIQUOTE, quasiquote, 1))
 
         
     def _define_if(self):
         """Defines the if 'function'"""
         def if_ex(args, env):
-            if len(args) < 2:
-                raise WrongNumParamsError(IF, 2, len(args))
+            if args[0].evaluate(env).is_nill():
+                return args[2].evaluate(env) if len(args) > 2 else Nils.nil
             else:
-                condition = args[0].evaluate(env)
-                if condition.is_nill():
-                    if len(args) > 2:
-                        result = args[2].evaluate(env)
-                    else:
-                        result = Nils.nil
-                else:
-                    result = args[1].evaluate(env)
-                return result
-        self.define(SymbolExpression(IF), LispFunction(IF, if_ex))
+                return args[1].evaluate(env)
+        self.define(SymbolExpression(IF), LispFunction(IF, if_ex, 2))
 
     def _define_atom(self):
         """Defines the atom function. True if argument is an atom, else ()"""
         def atom(args, env):
-            if len(args) < 1:
-                raise WrongNumParamsError(ATOM, 1, len(args))
-            else:
-                arg = args[0].evaluate(env)
-                return (arg if arg.atom() else Nils.nil)
+            arg = args[0].evaluate(env)
+            return arg if arg.atom() else Nils.nil
         self.define(
-            SymbolExpression(ATOM), LispFunction(
-                ATOM, atom))
+            SymbolExpression(IS_ATOM), LispFunction(
+                IS_ATOM, atom, 1))
 
     def _define_car(self):
         """Defines the car function"""
         def car(args, env):
-            if len(args) < 1:
-                raise WrongNumParamsError(CAR, 1, len(args))
             exp = args[0].evaluate(env)
-            
-            try:
-                return exp.car()
-            except AttributeError:
+            if not (issubclass(type(exp), AtomExpression) or type(exp) == ListExpression):
                 raise TypeError(CAR, exp, "List or Symbol")
-
-        self.define(SymbolExpression(CAR), LispFunction(CAR, car))
+            return exp.car()
+        self.define(SymbolExpression(CAR), LispFunction(CAR, car, 1))
 
     def _define_cdr(self):
         """Defines the cdr function"""
         def cdr(args, env):
-            if len(args) < 1:
-                raise WrongNumParamsError(CDR, 1, len(args))
             exp = args[0].evaluate(env)
-            intermediate = ListExpression([SymbolExpression(CDR), exp])
-            try:
-                return exp.cdr()
-            except AttributeError:
+            if not (issubclass(type(exp), AtomExpression) or type(exp) == ListExpression):
                 raise TypeError(CDR, exp, "List or Symbol")
-        self.define(SymbolExpression(CDR), LispFunction(CDR, cdr))
+            return exp.cdr()
+        self.define(SymbolExpression(CDR), LispFunction(CDR, cdr, 1))
 
     def _define_cons(self):
         """Defines the cons function"""
         def cons(args, env):
-            if len(args) < 2:
-                raise WrongNumParamsError(CONS, 2, len(args))
             expr1 = args[0].evaluate(env)
             expr2 = args[1].evaluate(env)
-            try:
-                return expr2.cons(expr1)
-            except AttributeError:
-                raise TypeError(CONS, exp_2, "List or Symbol")
+            if not (type(expr2) == ListExpression or
+                    (issubclass(type(expr2), AtomExpression) and
+                                issubclass(type(expr1), AtomExpression))):
+                raise TypeError(CONS, str(expr1) + " and " + str(expr2), "Lists or Symbols")
+            return expr2.cons(expr1)
                 
-        self.define(SymbolExpression(CONS), LispFunction(CONS, cons))
+        self.define(SymbolExpression(CONS), LispFunction(CONS, cons, 2))
 
     def _define_subtract(self):
         """Defines the subtract function"""        
         def subtract(args, env):
-            if len(args) < 2:
-                raise WrongNumParamsError(SUBTRACT, 2, len(args))
             expr1 = args[0].evaluate(env)
             expr2 = args[1].evaluate(env)
             if not type(expr1) == type(expr2) == NumberExpression:
                 raise TypeError(SUBTRACT, "{} and {}".format(expr1, expr2), "Numbers")
             else:
                 return expr1.subtract(expr2)
-        self.define(SymbolExpression(SUBTRACT), LispFunction(SUBTRACT, subtract))
+        self.define(SymbolExpression(SUBTRACT), LispFunction(SUBTRACT, subtract, 2))
 
     def _define_lessthan(self):
         """Defines the less than function"""        
         def lessthan(args, env):
-            if len(args) < 2:
-                raise WrongNumParamsError(LESSTHAN, 2, len(args))
             expr1 = args[0].evaluate(env)
             expr2 = args[1].evaluate(env)
             try:
@@ -268,23 +243,21 @@ class BaseEnvironment(Environment):
             except AttributeError:
                 raise TypeError(LESSTHAN, "{} and {}".format(expr1, expr2), "Numbers or symbols")
 
-        self.define(SymbolExpression(LESSTHAN), LispFunction(LESSTHAN, lessthan))
+        self.define(SymbolExpression(LESSTHAN), LispFunction(LESSTHAN, lessthan, 2))
 
     def _define_print_sym(self):
         """Defines print function"""
         def print_sym(args, env):
-            if len(args) < 1:
-                raise WrongNumParamsError(PRINT, 1, len(args))
-            # Add any newline characters (\n) or spaces (\s)
             print_val = args[0].evaluate(env)
-            if type(print_val) not in {str, int, float, SymbolExpression, NumberExpression}:
-                raise TypeError(PRINT, type(print_val), "Symbol")
-            print_val = str(print_val)
-            print_val = print_val.replace("\\n", "\n").replace("\\s", " ")
-            print(print_val, end="")
+            if print_val.is_empty():
+                print("nil", end="")
+            else:
+                if not issubclass(type(print_val), AtomExpression):
+                    raise TypeError(PRINT, type(print_val), "Atom")
+                print(print_val.formatted(), end="")
             sys.stdout.flush()
             return Nils.null # Return an empty string
-        self.define(SymbolExpression(PRINT), LispFunction(PRINT, print_sym))
+        self.define(SymbolExpression(PRINT), LispFunction(PRINT, print_sym, 1))
 
     def _define_input_char(self):
         """Defines input char function"""
@@ -315,16 +288,15 @@ class BaseEnvironment(Environment):
         def input_char(args, env):
             ch = getch()
             # Replace any carriage returns with newlines
-            if len(ch) == 1 and ord(ch) == 13:
+            if ord(ch) == 13:
                 ch = "\\n"
                 print("\n", end="")
-            elif ch == " ":
-                ch = "\\s"
-                print(" ", end="")
             else:
                 print(ch, end="")
+            if ch == " ":
+                ch = "\\s"
             sys.stdout.flush()
-            return SymbolExpression(ch)
+            return LispExpression.create_atom(ch)
 
         self.define(SymbolExpression(INPUT_CHAR), LispFunction(INPUT_CHAR, input_char))
 
@@ -339,47 +311,71 @@ class BaseEnvironment(Environment):
 
 class MacroEnvironment(BaseEnvironment):
     def _define_defaults(self):
-        """Defines default functions"""
+        """Defines default functions not including defun"""
         self._define_lambda()
         self._define_defmacro()
+
         self._define_quote()
         self._define_if()
         self._define_car()
         self._define_cdr()
         self._define_cons()
         self._define_atom()
+        
         self._define_quasiquote()
+        
         self._define_subtract()
         self._define_lessthan()
+        
         self._define_print_sym()
         self._define_input_char()
+
         self._define_gensym()
 
+        self.libs = ["macrostdlib.lisp", "stdlib.lisp"]
 
-class DefaultEnvironment(BaseEnvironment):
+
+class DefaultEnvironment(MacroEnvironment):
     def _define_defaults(self):
-        """Defines default functions"""
-        self._define_lambda()
-        self._define_defmacro()
-        self._define_quote()
-        self._define_if()
-        self._define_car()
-        self._define_cdr()
-        self._define_cons()
-        self._define_atom()
-        self._define_quasiquote()
-        self._define_subtract()
-        self._define_lessthan()
-        self._define_print_sym()
-        self._define_input_char()
-        self._define_gensym()
+        """Defines all default functions"""
+        super(DefaultEnvironment, self)._define_defaults()
         self._define_defun()
+        self.libs = ["fnstdlib.lisp", "stdlib.lisp"]
 
 class MinimumEnvironment(BaseEnvironment):
     def _define_defaults(self):
-        """Defines default functions"""
+        """Defines a minimal set of default functions"""
         self._define_lambda()
         self._define_defun()
         self._define_quote()
         self._define_if()
+
+        self.libs = ["minstdlib.lisp"]
+
+class PythonEnvironment(DefaultEnvironment):
+    def _define_pythoncall(self):
+        """Defines the python call function"""
+        def pycall(args, env):
+            if len(args) < 1:
+                raise WrongNumParamsError(PYCALL, 1, len(args))
+            pyfunc = args[0].evaluate(env)
+            if not pyfunc.atom():
+                raise BadInputError("python function", pyfunc)
+            python_exp = "{}({})".format(
+                str(pyfunc),
+                ", ".join([str(arg.evaluate(env).value) for arg in args[1:]]))
+            try:
+                result = eval(python_exp)
+            except Exception as e:
+                raise BadInputError("Python expression", python_exp)
+            if type(result) == list:
+                return ListExpression([LispExpression.create_atom(r) for r in result])
+            else:
+                return LispExpression.create_atom(result)
+        self.define(SymbolExpression(PYCALL), LispFunction(PYCALL, pycall))
+    
+    def _define_defaults(self):
+        """Allows for calling of arbitrary python functions"""
+        super(PythonEnvironment, self)._define_defaults()
+        self._define_pythoncall()
 

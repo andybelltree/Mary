@@ -1,5 +1,26 @@
+"""
+Defines Lisp Expression objects to be evaluated. Basic hierarchy of inheritance is as
+follows:
+
+                          +---------------+
+                          |LispExpression |
+                          +--------+------+
+            +----------------^     ^    ^----------------+
+            |                      |                     |
+    +-------+--------+     +-------+------+    +---------+--------------+
+    |SymbolExpression|     |ListExpression|    |ApplicableLispExpression|
+    +--+-------------+     +--------------+    +------------------------+
+       ^   ^-------------+                    +-^         ^  ^------------------+
+       |                 |                    |           |                     |
++------+-------+ +-------+---------+ +--------+------+ +--+-------------+ +-----+------+
+|AtomExpression| |NumberExpression | |MacroExpression| |LambdaExpression| |LispFunction|
++--------------+ +-----------------+ +---------------+ +----------------+ +------------+
+
+"""
+
 from abc import ABCMeta, abstractmethod
 from .LispErrors import *
+from .EvalHistory import EvalHistory
 
 QUOTE="quote"
 QUASIQUOTE="quasiquote"
@@ -14,120 +35,115 @@ TRANSLATIONS = {
 }
 LAMBDA="lambda"
 
+
 # Lisp Expression objects
 class LispExpression(metaclass=ABCMeta):
     """A generic Lisp Expression"""
     def __init__(self, value):
         self.value = value
-        self.children = []
-        self.result = None
-        self.eval_env = None
-
-    @abstractmethod
+        self.eval_hist = EvalHistory(self)
+        
     def evaluate(self, environment):
-        raise NotImplementedError
+        """By default, autoquote and return this expression"""
+        return self
 
     def is_nill(self):
+        """Returns true iff expression has a false value (empty list or empty string)"""
         for n in Nils.nils:
             if self.value == n.value:
                 return True
         return False
 
     def is_empty(self):
-        return self.value == []
+        """Returns true iff expression is an empty list"""
+        return self.value == Nils.nil.value
 
     def atom(self):
-        return type(self) in {NumberExpression, SymbolExpression}
+        """Returns true iff expression is a number or a symbol expression"""
+        return False
 
-    def print_macros(self, depth):
-        is_macro = len(self.children) > 0 and type(self.children[0]) == MacroExpression
-        if is_macro:
-            print("|" * depth)
-            print(">" * depth + str(self))
-            print("-" * depth + str(self.children[0]))
-        for child in self.children:
-            child.print_macros(depth + 1)
-        if is_macro:
-            print("=" * depth + str(self.result))
-        if self.result:
-            self.result.print_macros(depth)
+    def is_macro(self):
+        """Returns true iff expression is a macro expression. For stack tracing."""
+        return False
     
-    def print_eval(self, depth, verbose=False, char='-'):
-        print(char + (char + "|") * (depth-1) + ">" + str(self))
-        if verbose and self.eval_env:
-            print("\n" + str(self.eval_env) + "\n")
-        if self.result:
-            for child in self.children:
-                child.print_eval(depth + 1, verbose, char)
-            self.result.print_eval(depth, verbose, "=" if char == '-' else '-')
-
     def copy(self):
+        """Return a copy of this expression. Only needed for tracing back debugging."""
         return self.__class__(self.value)
 
-class SymbolExpression(LispExpression):
-    """A symbol"""
+    def track_children(self, children):
+        self.eval_hist.add_children(children)
+
+    def track_result(self, result):
+        self.eval_hist.add_result(result)
+        return result
+
+    def track_env(self, env):
+        self.eval_hist.add_env(env)
+        return env
+        
+    @staticmethod
+    def create_atom(value):
+        if type(value) in {int, float}:
+            return NumberExpression(value)
+        else:
+            atom = SymbolExpression(value)
+            try:
+                return NumberExpression(int(atom.formatted()))
+            except ValueError:
+                try:
+                    return NumberExpression(float(atom.formatted()))
+                except ValueError:
+                    return atom
+
+
+class AtomExpression(LispExpression):
+    """An atom expression"""
     def __init__(self, value):
-        super(SymbolExpression, self).__init__(value)
+        super(AtomExpression, self).__init__(value)
 
-    def evaluate(self, environment):
-        """Look up the value in the environment and return"""
-        self.result = environment.retrieve_definition(self)
-        return self.result
-
-    def lessthan(self, other):
-        """Return 't iff this value is lexically less than the other otherwise ()"""
-        return Nils.null if type(other) == SymbolExpression and self.value >= other.value else self
+    def cons(self, other):
+        """Join two atoms together"""
+        return LispExpression.create_atom(str(other) + str(self))
 
     def car(self):
-        """Return the first character of this symbol"""
-        return SymbolExpression(self.value[0])
+        """Return the first character of this atom"""
+        return LispExpression.create_atom(str(self.value)[0]) if len(str(self.value)) > 0 else Nils.null
 
     def cdr(self):
         """Return everything but the first character of this symbol"""
-        if len(self.value) == 1:
-            return Nils.null
-        else:
-            return SymbolExpression(self.value[1:])
+        return LispExpression.create_atom(str(self.value)[1:])
 
-    def cons(self, other):
-        if type(other) != SymbolExpression:
-            raise TypeError(CONS, "String", type(other))
-        return SymbolExpression(repr(other) + self.value)
+    def lessthan(self, other):
+        """Return self if this value is lexically less than the other 
+        or the other is of a different type otherwise ()"""
+        return Nils.null if type(other) == self.__class__ and self.value >= other.value else self
 
+    def formatted(self):
+        return str(self).replace("\\n", "\n").replace("\\s", " ")
+
+    def atom(self):
+        """Returns true as expression is an atom"""
+        return True
+    
     def __repr__(self):
-        return self.value
+        return str(self.value)
 
-class NumberExpression(LispExpression):
+    
+class SymbolExpression(AtomExpression):
+    """A symbol. (Any atom which isn't a number)."""
+    def evaluate(self, environment):
+        """Look up the value in the environment and return"""
+        return self.track_result(environment.retrieve_definition(self).copy())
+
+class NumberExpression(AtomExpression):
     """A number"""
-    def __init__(self, value):
-        if type(value) in {int, float}:
-            super(NumberExpression, self).__init__(value)
-        else:
-            try:
-                super(NumberExpression, self).__init__(int(value))
-            except ValueError:
-                super(NumberExpression, self).__init__(float(value))
-            except ValueError:
-                raise BadInputError("number", value)
-
     def subtract(self, other):
         """Return the difference between this number and another"""
         return NumberExpression(self.value - other.value)
 
-    def lessthan(self, other):
-        """Return 1 iff this value is less than the other otherwise 0"""
-        return Nils.nought if type(other) == NumberExpression and self.value >= other.value else NumberExpression(1)
-            
-    def evaluate(self, environment):
-        """Return 'autoquote'"""
-        return self
-
-    def __repr__(self):
-        return str(self.value)
-
 class ApplicableLispExpression(LispExpression):
-    """A lisp expression which can be applied to a set of arguements"""
-    def __init__(self, value):
+    """A lisp expression which can be applied to a set of arguments"""
+    def __init__(self, value, variable_param=None):
         super(ApplicableLispExpression, self).__init__(value)
         if len(value) != 2:
             raise WrongNumParamsError(type(self), 2, len(value))
@@ -137,7 +153,42 @@ class ApplicableLispExpression(LispExpression):
             raise TypeError(LAMBDA, value[0], ListExpression)
         self.params = value[0].value
         self.body = value[1]
-        self.num_params = len(self.params)
+        self.variable_param = self._get_variable_param()
+
+    def num_params(self):
+        return len(self.params) + (1 if self.variable_param else 0)
+        
+    def _get_variable_param(self):
+        """Get the variable parameter by finding it in the
+        list of parameters and remove it from the list of
+        parameters. Return None if not found"""
+        for i in range(len(self.params)):
+            if self.params[i].value == "&rest":
+                if i + 2 > len(self.params):
+                    raise KeywordError(self.params[i], "Must be followed by a parameter")
+                variable_param = self.params[i + 1]
+                # Remove the keyword and variable parameter from the list of parameters
+                self.params = self.params[:i] + self.params[i+2:]
+                return variable_param
+
+    def _define_args(self, arguments, env):
+        for i in range(len(self.params)):
+            env.define(self.params[i], arguments.value[i])
+        if self.variable_param:
+            # Put any extra parameters into the variable parameter
+            env.define(
+                self.variable_param,
+                ListExpression(arguments.value[len(self.params):]))
+
+    def check_args(self, arguments):
+        """Check the right number of arguments have been passed"""
+        if len(arguments.value) < len(self.params) or len(
+                arguments.value) > len(self.params) and not self.variable_param:
+            raise(WrongNumParamsError(self, len(self.params), len(arguments.value)))
+
+    def params_str(self):
+        return "(" + " ".join([repr(p) for p in self.params] + (
+            [repr(self.variable_param)] if self.variable_param else [])) + ")"
 
     @abstractmethod
     def apply_to(self, arguments, environment):
@@ -145,133 +196,98 @@ class ApplicableLispExpression(LispExpression):
         raise NotImplementedError
 
 class LispFunction(ApplicableLispExpression):
-    """A lisp function"""
-    def __init__(self, name, definition):
-        super(LispFunction, self).__init__([Nils.nil,definition])
+    """A  built in lisp function"""
+    def __init__(self, name, definition, num_expected_args=None):
+        super(LispFunction, self).__init__([Nils.nil, definition], None)
+        self.num_expected_args = num_expected_args
         self.name = name
         
-    def apply_to(self, args, environment, parent):
-        parent.children = args.value
-        parent.result = self.body(args.value, environment)
-        return parent.result
-
-    def evaluate(self, environment):
-        return self
+    def apply_to(self, args, environment, caller):
+        """Call function on arguments in environment. Eval info is stored with caller for
+        debugging purposes"""
+        if self.num_expected_args and len(args.value) < self.num_expected_args:
+            raise WrongNumParamsError(self.name, self.num_expected_args, len(args.value))
+        return caller.track_result(self.body(args.value, environment))
 
     def copy(self):
-        return self.__class__(self.name, self.body)
+        """Create a copy of this function"""
+        return self.__class__(self.name, self.body, self.num_expected_args)
 
     def __repr__(self):
-        return self.name#"<builtin {} function>".format(self.name)
+        return self.name + " [builtin]"
 
 class LambdaExpression(ApplicableLispExpression):
     """An anonymous function definition"""
-    def __init__(self, value, parent_environment):
-        super(LambdaExpression, self).__init__(value)
+    def __init__(self, value, parent_environment, variable_param = None):
+        super(LambdaExpression, self).__init__(value, variable_param)
         self.environment = parent_environment
 
-    def __repr__(self):
-        return "(lambda ({}) {})".format(
-            " ".join([repr(p) for p in self.params]),
-            self.body
-        )
-
-    def evaluate(self, environment):
-        return self
-
-    def apply_to(self, arguments, environment, parent):
+    def apply_to(self, arguments, environment, caller):
+        """Apply to arguments in environment. Eval info stored with caller for debugging"""
         # Arguments are evaluated first
-        parent.children = arguments.value
         arguments = ListExpression(
-            [argument.evaluate(environment) for argument in parent.children])
-        
-        parent.result = self.body.copy()
-        
-        if len(arguments.value) < self.num_params:
-            raise(WrongNumParamsError(LAMBDA, self.num_params, len(arguments)))
-        
+            [argument.evaluate(environment) for argument in arguments.value])
+        self.check_args(arguments)
+        # Copy the body to separate it during debugging. Keep track of the environment
+        body = caller.track_result(self.body.copy())
         # Create a closure to apply the lambda in
-        closure = self.environment.create_child()
-
-        parent.result.eval_env = closure
-        
-        for i in range(self.num_params):
-            closure.define(self.params[i], arguments.value[i])
-
-        
-        result = parent.result.evaluate(closure)
-
-        return result
+        closure = body.track_env(self.environment.create_child())
+        # Define all arguments in the closure
+        self._define_args(arguments, closure)
+        # Evaluate the body in the environment
+        return body.evaluate(closure)
 
     def copy(self):
-        return self.__class__(self.value[:], self.environment)
+        """Create a copy of this lambda expression"""
+        return self.__class__(self.value, self.environment, self.variable_param)
 
+    def __repr__(self):
+        return "(lambda {} {})".format(
+            self.params_str(),
+            self.body
+        )
 
 class MacroExpression(ApplicableLispExpression):
-    """A macro"""
+    """A macro. These will be applied to their arguments before their arguments are evaluated, then
+    the result will be interpreted"""
     def __init__(self, value, name, variable_param = None):
-        super(MacroExpression, self).__init__(value)
-        # Name is kept for debugging purposes
+        super(MacroExpression, self).__init__(value, variable_param)
         self.name = name
-        # Need to extract any keyword arguments
-        self.variable_param = variable_param
-        for i in range(self.num_params):
-            if self.params[i].value == "&rest":
-                if i + 2 > self.num_params:
-                    raise KeywordError(self.params[i], "Must be followed by a parameter")
-                self.variable_param = self.params[i + 1]
-                # Remove the keyword and variable parameter from the list of parameters
-                self.params.pop(i)
-                self.params.pop(i)
-                self.num_params -= 2
-                break
 
-    def evaluate(self, environment):
-        return self
-
-    def __repr__(self):
-        return "(macro {} ({}) ({}))".format(self.name,
-            " ".join([repr(p) for p in self.params] + ([repr(self.variable_param)] if self.variable_param else [])),
-            self.body
-        )
-
-    def copy(self):
-        return self.__class__(self.value[:], self.name, self.variable_param)
-
-    def apply_to(self, arguments, environment, parent):
+    def apply_to(self, arguments, environment, caller):
+        """Apply to arguments in environment. Eval info stored with caller for debugging"""
+        self.check_args(arguments)
         # Create an environment to apply the macro in
-        parent.children = [self] + arguments.value
-        env = environment.create_child()
-        self.eval_env = env
-        if len(arguments.value) < self.num_params:
-            raise(WrongNumParamsError(self, self.num_params, len(arguments)))
-        for i in range(self.num_params):
-            env.define(self.params[i], arguments.value[i])
-        if self.variable_param:
-            # Put any extra parameters into the variable parameter
-            env.define(
-                self.variable_param,
-                ListExpression(arguments.value[self.num_params:]))
+        env = self.track_env(environment.create_child())
+        # Define parameters in environment
+        self._define_args(arguments, env)
         # Evaluate the macro to get code to interpret, then interpret that code
         # Expand in a child environment of the one passed
-        macro_expansion = self.body.evaluate(env)
-        parent.result = macro_expansion
-        # Interpret in the passed environment
-        result = macro_expansion.evaluate(environment)
-        return result
+        return caller.track_result(self.body.evaluate(env)).evaluate(environment)
+
+    def is_macro(self):
+        return True
+
+    def copy(self):
+        """Create a copy of this macro expression"""
+        return self.__class__(self.value, self.name, self.variable_param)
+
+    def __repr__(self):
+        return "(macro {} {} {})".format(self.name,
+            self.params_str(),
+            self.body
+        )
     
 class ListExpression(LispExpression):
     """A List"""
     def __init__(self, input_list):
         assert(type(input_list) == list)
         super(ListExpression, self).__init__(input_list)
+        self.track_children(self.value)
 
     def car(self):
         """First item in list"""
-        if len(self.value) > 0:
-            return self.value[0]
-        else:
-            return Nils.nil
+        return self.value[0] if len(self.value) > 0 else Nils.nil
 
     def cdr(self):
         """Everything but first item in list"""
@@ -286,30 +302,23 @@ class ListExpression(LispExpression):
         if len(self.value) == 0:
             return self
         else:
-            # Get the first item and invoke it on the  rest
             fn = self.value[0].evaluate(environment)
             if issubclass(type(fn), ApplicableLispExpression):
-                arguments = ListExpression(self.value[1:])
-                return fn.apply_to(arguments, environment, self)
+                return fn.apply_to(ListExpression(self.value[1:]), environment, self)
             else:
                 raise NotAFunctionError(fn)
-
             
-    def __len__(self):
-        return len(self.value)
-        
     def __repr__(self):
-        if len(self.value) > 1 and self.value[0].atom() and self.value[0].value in TRANSLATIONS:
-                # If the first value is a quote, then unparse
-                return "{}{}".format(TRANSLATIONS[self.value[0].value], repr(self.value[1]))
-        return "({})".format(" ".join([repr(i) for i in self.value]))
+        return "{}{}".format(TRANSLATIONS[self.value[0].value], repr(self.value[1])) if len(
+            self.value) > 1 and self.value[0].atom() and self.value[
+                0].value in TRANSLATIONS else "({})".format(" ".join([repr(i) for i in self.value]))
 
     def copy(self):
+        """Return a copy of this list, with all items in it also copied"""
         return self.__class__([v.copy() for v in self.value])
 
 class Nils(object):
     """All representations of False"""
     nil = ListExpression([])
-    nought = NumberExpression(0)
     null = SymbolExpression("")
-    nils = [nil, nought, null]
+    nils = [nil, null]
