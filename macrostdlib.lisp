@@ -1,5 +1,5 @@
 ;; defun 
-;; DEPENDENCIES: splice, quasiquote, defmacro, quote, lambda
-;; DEPENDED ON BY: 
+;; DEPENDENCIES: NONE
+;; DEPENDED ON BY: NONE
 (defmacro defun (name params &rest body) `(defmacro ,name ,params `((lambda ,',params ,',@body) ,,@params)))
 

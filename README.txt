@@ -7,7 +7,7 @@ Mary will accept the following arguments:
 -m Outputs information about macroexpansion
 -e Outputs information about the environment
 -d Outputs evaluation history (Lisp stack trace)
--f <file_name> Interpreters file instead of starting the repl
+-f <file_name> Interprets file instead of starting the repl
 -a <macros|default|min> Chooses set of axioms to run on
 
 The standard library is in stdlib.lisp. The original version of this library is in the lib/ folder, and stdlib.lisp is the result after running calculate_dependencies.py on this library. If you wish to remove any function definitions, take note of any dependencies it has and remove those too. To add function definitions, add them in the file in lib/, then run calculate_all_dependencies to update the base library.

@@ -1,120 +1,120 @@
-;; cdr 
-;; DEPENDENCIES: lambda
-;; DEPENDED ON BY: seconds, cdddr, caadr, map, cdar, cddar, pair?, cddr, cadr, firsts, cadar, cdadr, reduce, cond, caddr, append, reverse
-(defun cdr (c) (c (lambda (x y) y)))
-
-;; cdddr 
-;; DEPENDENCIES: cdr
-;; DEPENDED ON BY: 
-(defun cdddr (l) (cdr (cdr (cdr l))))
-
-;; or 
-;; DEPENDENCIES: if
-;; DEPENDED ON BY: 
-(defun or (x y) (if x x y))
-
 ;; car 
-;; DEPENDENCIES: lambda
-;; DEPENDED ON BY: caadr, reduce, caar, map, cdar, cddar, cadr, reverse, cadar, cdadr, cond, caddr, append
+;; DEPENDENCIES: NONE
+;; DEPENDED ON BY: cdar, caadr, cddar, map, reverse, append, cadr, caar, cadar, reduce, cond, cdadr, caddr
 (defun car (c) (c (lambda (x y) x)))
 
+;; or 
+;; DEPENDENCIES: NONE
+;; DEPENDED ON BY: NONE
+(defun or (x y) (if x x y))
+
+;; and 
+;; DEPENDENCIES: NONE
+;; DEPENDED ON BY: NONE
+(defun and (x y) (if x y x))
+
+;; cdr 
+;; DEPENDENCIES: NONE
+;; DEPENDED ON BY: cdar, firsts, seconds, caadr, cddar, map, pair?, reverse, append, cadr, cdddr, cadar, reduce, cond, cdadr, cddr, caddr
+(defun cdr (c) (c (lambda (x y) y)))
+
+;; cdadr 
+;; DEPENDENCIES: car, cdr
+;; DEPENDED ON BY: NONE
+(defun cdadr (l) (cdr (car (cdr l))))
+
 ;; cadar 
-;; DEPENDENCIES: cdr, car
+;; DEPENDENCIES: car, cdr
 ;; DEPENDED ON BY: seconds, cond
 (defun cadar (l) (car (cdr (car l))))
 
-;; cadr 
-;; DEPENDENCIES: cdr, car
-;; DEPENDED ON BY: 
-(defun cadr (l) (car (cdr l)))
+;; cdddr 
+;; DEPENDENCIES: cdr
+;; DEPENDED ON BY: NONE
+(defun cdddr (l) (cdr (cdr (cdr l))))
 
 ;; cddar 
-;; DEPENDENCIES: cdr, car
-;; DEPENDED ON BY: 
+;; DEPENDENCIES: car, cdr
+;; DEPENDED ON BY: NONE
 (defun cddar (l) (cdr (cdr (car l))))
 
-;; cons 
-;; DEPENDENCIES: lambda
-;; DEPENDED ON BY: seconds, map, reverse, append, firsts
-(defun cons (x y) (lambda (f) (f x y)))
+;; cdar 
+;; DEPENDENCIES: car, cdr
+;; DEPENDED ON BY: NONE
+(defun cdar (l) (cdr (car l)))
 
-;; append 
-;; DEPENDENCIES: if, cons, cdr, car
-;; DEPENDED ON BY: reverse
-(defun append (lista listb) (if lista (cons (car lista) (append (cdr lista) listb)) listb))
+;; cadr 
+;; DEPENDENCIES: car, cdr
+;; DEPENDED ON BY: NONE
+(defun cadr (l) (car (cdr l)))
 
 ;; caar 
 ;; DEPENDENCIES: car
-;; DEPENDED ON BY: cond, firsts
+;; DEPENDED ON BY: firsts, cond
 (defun caar (l) (car (car l)))
 
 ;; cond 
-;; DEPENDENCIES: caar, cadar, car, if, cdr
-;; DEPENDED ON BY: 
+;; DEPENDENCIES: cadar, caar, cdr, car
+;; DEPENDED ON BY: NONE
 (defun cond (options) (if (car options) (if (caar options) (cadar options) (cond (cdr options)))))
+
+;; cons 
+;; DEPENDENCIES: NONE
+;; DEPENDED ON BY: append, map, firsts, seconds, reverse
+(defun cons (x y) (lambda (f) (f x y)))
+
+;; firsts 
+;; DEPENDENCIES: cons, cdr, caar
+;; DEPENDED ON BY: NONE
+(defun firsts (l) (if l (cons (caar l) (firsts (cdr l)))))
+
+;; map 
+;; DEPENDENCIES: car, cons, cdr
+;; DEPENDED ON BY: NONE
+(defun map (fn l) (if l (cons (fn (car l)) (map fn (cdr l)))))
+
+;; append 
+;; DEPENDENCIES: car, cons, cdr
+;; DEPENDED ON BY: reverse
+(defun append (lista listb) (if lista (cons (car lista) (append (cdr lista) listb)) listb))
+
+;; null? 
+;; DEPENDENCIES: NONE
+;; DEPENDED ON BY: NONE
+(defun null? (x) (if x () x))
+
+;; caadr 
+;; DEPENDENCIES: car, cdr
+;; DEPENDED ON BY: NONE
+(defun caadr (l) (car (car (cdr l))))
+
+;; seconds 
+;; DEPENDENCIES: cons, cdr, cadar
+;; DEPENDED ON BY: NONE
+(defun seconds (l) (if l (cons (cadar l) (seconds (cdr l)))))
+
+;; cddr 
+;; DEPENDENCIES: cdr
+;; DEPENDED ON BY: NONE
+(defun cddr (l) (cdr (cdr l)))
 
 ;; pair? 
 ;; DEPENDENCIES: cdr
 ;; DEPENDED ON BY: reduce, reverse
 (defun pair? (x) (cdr x))
 
-;; reduce 
-;; DEPENDENCIES: cdr, if, pair?, car
-;; DEPENDED ON BY: 
-(defun reduce (fn l) (if (pair? l) (fn (car l) (reduce fn (cdr l))) (car l)))
-
-;; cdadr 
-;; DEPENDENCIES: cdr, car
-;; DEPENDED ON BY: 
-(defun cdadr (l) (cdr (car (cdr l))))
-
-;; caddr 
-;; DEPENDENCIES: cdr, car
-;; DEPENDED ON BY: 
-(defun caddr (l) (car (cdr (cdr l))))
-
-;; map 
-;; DEPENDENCIES: car, cons, cdr, if
-;; DEPENDED ON BY: 
-(defun map (fn l) (if l (cons (fn (car l)) (map fn (cdr l)))))
-
-;; firsts 
-;; DEPENDENCIES: caar, cons, cdr, if
-;; DEPENDED ON BY: 
-(defun firsts (l) (if l (cons (caar l) (firsts (cdr l)))))
-
-;; caadr 
-;; DEPENDENCIES: cdr, car
-;; DEPENDED ON BY: 
-(defun caadr (l) (car (car (cdr l))))
-
-;; cddr 
-;; DEPENDENCIES: cdr
-;; DEPENDED ON BY: 
-(defun cddr (l) (cdr (cdr l)))
-
-;; null? 
-;; DEPENDENCIES: if
-;; DEPENDED ON BY: 
-(defun null? (x) (if x () x))
-
 ;; reverse 
-;; DEPENDENCIES: cons, cdr, append, car, if, pair?
-;; DEPENDED ON BY: 
+;; DEPENDENCIES: pair?, append, cons, cdr, car
+;; DEPENDED ON BY: NONE
 (defun reverse (l) (if (pair? l) (append (reverse (cdr l)) (cons (car l) ())) l))
 
-;; cdar 
-;; DEPENDENCIES: cdr, car
-;; DEPENDED ON BY: 
-(defun cdar (l) (cdr (car l)))
+;; reduce 
+;; DEPENDENCIES: car, pair?, cdr
+;; DEPENDED ON BY: NONE
+(defun reduce (fn l) (if (pair? l) (fn (car l) (reduce fn (cdr l))) (car l)))
 
-;; and 
-;; DEPENDENCIES: if
-;; DEPENDED ON BY: 
-(defun and (x y) (if x y x))
-
-;; seconds 
-;; DEPENDENCIES: cadar, cons, cdr, if
-;; DEPENDED ON BY: 
-(defun seconds (l) (if l (cons (cadar l) (seconds (cdr l)))))
+;; caddr 
+;; DEPENDENCIES: car, cdr
+;; DEPENDED ON BY: NONE
+(defun caddr (l) (car (cdr (cdr l))))
 

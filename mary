@@ -9,7 +9,7 @@ Arguments:
 -m Outputs information about macroexpansion
 -e Outputs information about the environment
 -d Outputs evaluation history (Lisp stack trace)
--f <file_name> Interpreters file instead of starting the repl
+-f <file_name> Interprets file instead of starting the repl
 -a <macros|default|min> Chooses set of axioms to run on
 """
 

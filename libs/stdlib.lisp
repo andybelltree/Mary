@@ -563,19 +563,21 @@
 
 (defun quicksort (l)
   (if (pair? l)
-      (letrec ((pivot (car l))
-	       (firstlist
-		(quicksort
-		 (allwhich
-		  (cdr l)
-		  (lambda (x) (< x pivot)))))
-	       (secondlist
-		(quicksort
-		 (allwhich
-		  (cdr l)
-		  (lambda (x) (not (< x pivot)))))) )
-      (append firstlist (cons pivot secondlist))
-      )
+      (let ((pivot (car l)))
+	(append
+	 (quicksort
+	  (allwhich
+	   (cdr l)
+	   (lambda (x) (< x pivot))))
+	(cons pivot
+	      (quicksort
+	       (allwhich
+		(cdr l)
+		(lambda (x) (not (< x pivot))))
+	       )
+	      )
+	)
+	)
       l
       )
   )

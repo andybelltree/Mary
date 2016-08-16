@@ -75,11 +75,7 @@ class FunctionDefinition():
                 if expr.car().atom():
                     dependency = str(expr.car())
                     dependencies.add(dependency)
-                    if dependency == "lambda":
-                        find_argument_dependencies(expr.cdr().cdr())
-                        find_arguments(expr.cdr().car())
-                    else:
-                        find_argument_dependencies(expr.cdr())
+                    find_argument_dependencies(expr.cdr())
                 else:
                     find_argument_dependencies(expr.cdr())
                     find_dependencies_helper(expr.car())
@@ -114,16 +110,20 @@ class FunctionDefinition():
     @classmethod
     def initialise_dependents(cls):
         for definition in cls.all_definitions.values():
-            for dependency in definition.dependencies:
+            dependencies_list = list(definition.dependencies)
+            for dependency in dependencies_list:
                 dep_obj = cls.all_definitions.get(dependency, None)
                 if dep_obj:
                     dep_obj.dependent_on.add(definition)
+                else:
+                    definition.dependencies.remove(dependency)
+
 
     def write_to_file(self, fileout):
         fileout.write(";; {} \n".format(self.name))
-        fileout.write(";; DEPENDENCIES: {}\n".format(", ".join(list(self.dependencies))))
+        fileout.write(";; DEPENDENCIES: {}\n".format(", ".join(list(self.dependencies)) if self.dependencies else "NONE"))
         fileout.write(";; DEPENDED ON BY: {}\n".format(
-            ", ".join([func.name for func in self.dependent_on])))
+            ", ".join([func.name for func in self.dependent_on])  if self.dependent_on else "NONE"))
         fileout.write(str(self.definition) + "\n\n")
 
     
