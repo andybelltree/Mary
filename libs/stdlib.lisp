@@ -51,7 +51,6 @@
   `(cond
     ((null? ',(cdr vals)) (if ,(car vals) 't)) ; at the end of the list, return the car value
     (,(car vals) (and ,@(cdr vals))) ; or if the first value is true
-    ('t ())			; call recursively on the rest. Otherwise return false
     )
   )
 
@@ -255,11 +254,12 @@
 ;; Predicates
 
 (defun null? (x)
-  (if x () 't)
+  (not x)
   )
 
 (defun not (x)
-  (null? x))
+  (if x () 't)
+  )
 
 
 (defun pair? (x)
@@ -562,21 +562,19 @@
 
 
 (defun quicksort (l)
-  (if (pair? l)
-      (let ((pivot (car l)))
-	(append
+  (if (cdr l)
+	 (append
+	   (quicksort
+	   (allwhich
+	    (cdr l)
+	     (lambda (x) (< x (car l)))))
+	 (cons (car l)
 	 (quicksort
-	  (allwhich
-	   (cdr l)
-	   (lambda (x) (< x pivot))))
-	(cons pivot
-	      (quicksort
-	       (allwhich
+	   (allwhich
 		(cdr l)
-		(lambda (x) (not (< x pivot))))
+		(lambda (x) (not (< x (car l)))))
 	       )
 	      )
-	)
 	)
       l
       )

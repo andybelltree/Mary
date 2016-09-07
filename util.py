@@ -81,7 +81,8 @@ def repl(interpreter, error_report=False):
             line = input(PROMPT)
             keyword_line = False
             for keyword in KEYWORDS:
-                if line.lower().startswith(keyword):
+                if line.lower().startswith(keyword) and (
+                    len(line) == len(keyword) or line[len(keyword)] == " "):
                     keyword_line = True
                     resolve_keyword(keyword, line, interpreter)
             if not keyword_line:

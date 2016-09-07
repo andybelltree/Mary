@@ -200,7 +200,7 @@ class LispFunction(ApplicableLispExpression):
     def __init__(self, name, definition, num_expected_args=None):
         super(LispFunction, self).__init__([Nils.nil, definition], None)
         self.num_expected_args = num_expected_args
-        self.name = name
+        self.name = str(name)
         
     def apply_to(self, args, environment, caller):
         """Call function on arguments in environment. Eval info is stored with caller for
@@ -214,7 +214,7 @@ class LispFunction(ApplicableLispExpression):
         return self.__class__(self.name, self.body, self.num_expected_args)
 
     def __repr__(self):
-        return self.name + " [builtin]"
+        return "{} [built-in]".format(self.name)
 
 class LambdaExpression(ApplicableLispExpression):
     """An anonymous function definition"""
@@ -227,6 +227,7 @@ class LambdaExpression(ApplicableLispExpression):
         # Arguments are evaluated first
         arguments = ListExpression(
             [argument.evaluate(environment) for argument in arguments.value])
+        # Ensure the right number of arguments were passed 
         self.check_args(arguments)
         # Copy the body to separate it during debugging. Keep track of the environment
         body = caller.track_result(self.body.copy())
@@ -250,7 +251,7 @@ class LambdaExpression(ApplicableLispExpression):
 class MacroExpression(ApplicableLispExpression):
     """A macro. These will be applied to their arguments before their arguments are evaluated, then
     the result will be interpreted"""
-    def __init__(self, value, name, variable_param = None):
+    def __init__(self, name, value, variable_param = None):
         super(MacroExpression, self).__init__(value, variable_param)
         self.name = name
 
@@ -270,7 +271,7 @@ class MacroExpression(ApplicableLispExpression):
 
     def copy(self):
         """Create a copy of this macro expression"""
-        return self.__class__(self.value, self.name, self.variable_param)
+        return self.__class__(self.name, self.value, self.variable_param)
 
     def __repr__(self):
         return "(macro {} {} {})".format(self.name,
