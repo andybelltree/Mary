@@ -1,0 +1,20 @@
+set datafile separator ","
+set terminal postscript eps enhanced color font 'Helvetica'
+set output 'mary.eps'
+set xlabel 'Items Sorted'
+set ylabel 'Time Taken (seconds)'
+set key bottom right
+set yrange[0:]
+f(x) = a*x*log(x) + b
+fit f(x) "times" using 1:2 via a, b
+plot "times" using 1:2 title "Mary" with points, f(x) title "{/Helvetica-Italic nlogn} regression"
+set output 'python.eps'
+h(x) = e*x*log(x) + f
+fit h(x) "times" using 1:3 via e, f
+plot "times" using 1:3 title "Python" with points, h(x) title "{/Helvetica-Italic nlogn} regression"
+set output 'pythonvmary.eps'
+set key top left
+set yrange [0.0001:]
+set logscale y
+set ylabel 'seconds taken (ticks placed on log_1_0 scale)'
+plot "times" using 1:3 title "Python" with points, h(x) title "Python {/Helvetica-Italic nlogn} regression", "times" using 1:2 title "Mary" with points, f(x) title "Mary {/Helvetica-Italic nlogn} regression"

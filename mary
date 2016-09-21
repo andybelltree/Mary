@@ -13,10 +13,9 @@ Arguments:
 -a <macros|default|min> Chooses set of axioms to run on
 """
 
-from os.path import dirname, join
 import sys
 import argparse
-from util import repl, interpret_file
+from util import repl
 
 from lisp.interpreter import Interpreter
 from lisp.Environment import MacroEnvironment, MinimumEnvironment, \
@@ -49,10 +48,7 @@ def main():
         env = PythonEnvironment()
     else:
         env = DefaultEnvironment()
-    interpreter = Interpreter(env, args.e, args.m, args.d)
-    if not args.c:
-        for lib in env.libs:
-            interpret_file(join(dirname(__file__), lib), interpreter)
+    interpreter = Interpreter(env, args.e, args.m, args.d, args.c)
     if not args.f:
         repl(interpreter, args.v)
     else:

@@ -3,6 +3,6 @@ cd libs
 LIBS=*
 for lib in $LIBS
 do
-	../calculate_dependencies.py $lib ../$lib
+	../calculate_dependencies.py $lib ../lisp/$lib
 done
 cd ..

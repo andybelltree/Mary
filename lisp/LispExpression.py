@@ -43,7 +43,7 @@ class LispExpression(metaclass=ABCMeta):
         self.value = value
         self.eval_hist = EvalHistory(self)
         
-    def evaluate(self, environment):
+    def evaluate(self, environment, debug):
         """By default, autoquote and return this expression"""
         return self
 
@@ -131,9 +131,12 @@ class AtomExpression(LispExpression):
     
 class SymbolExpression(AtomExpression):
     """A symbol. (Any atom which isn't a number)."""
-    def evaluate(self, environment):
+    def evaluate(self, environment, debug):
         """Look up the value in the environment and return"""
-        return self.track_result(environment.retrieve_definition(self).copy())
+        if debug:
+            return self.track_result(environment.retrieve_definition(self).copy())
+        else:
+            return self.track_result(environment.retrieve_definition(self))
 
 class NumberExpression(AtomExpression):
     """A number"""
@@ -191,7 +194,7 @@ class ApplicableLispExpression(LispExpression):
             [repr(self.variable_param)] if self.variable_param else [])) + ")"
 
     @abstractmethod
-    def apply_to(self, arguments, environment):
+    def apply_to(self, arguments, environment, debug):
         """Apply expression to arguments"""
         raise NotImplementedError
 
@@ -202,12 +205,12 @@ class LispFunction(ApplicableLispExpression):
         self.num_expected_args = num_expected_args
         self.name = str(name)
         
-    def apply_to(self, args, environment, caller):
+    def apply_to(self, args, environment, caller, debug):
         """Call function on arguments in environment. Eval info is stored with caller for
         debugging purposes"""
         if self.num_expected_args and len(args.value) < self.num_expected_args:
             raise WrongNumParamsError(self.name, self.num_expected_args, len(args.value))
-        return caller.track_result(self.body(args.value, environment))
+        return caller.track_result(self.body(args.value, environment, debug))
 
     def copy(self):
         """Create a copy of this function"""
@@ -222,21 +225,21 @@ class LambdaExpression(ApplicableLispExpression):
         super(LambdaExpression, self).__init__(value, variable_param)
         self.environment = parent_environment
 
-    def apply_to(self, arguments, environment, caller):
+    def apply_to(self, arguments, environment, caller, debug):
         """Apply to arguments in environment. Eval info stored with caller for debugging"""
         # Arguments are evaluated first
         arguments = ListExpression(
-            [argument.evaluate(environment) for argument in arguments.value])
+            [argument.evaluate(environment, debug) for argument in arguments.value])
         # Ensure the right number of arguments were passed 
         self.check_args(arguments)
         # Copy the body to separate it during debugging. Keep track of the environment
-        body = caller.track_result(self.body.copy())
+        body = caller.track_result(self.body.copy()) if debug else caller.track_result(self.body)
         # Create a closure to apply the lambda in
         closure = body.track_env(self.environment.create_child())
         # Define all arguments in the closure
         self._define_args(arguments, closure)
         # Evaluate the body in the environment
-        return body.evaluate(closure)
+        return body.evaluate(closure, debug)
 
     def copy(self):
         """Create a copy of this lambda expression"""
@@ -255,7 +258,7 @@ class MacroExpression(ApplicableLispExpression):
         super(MacroExpression, self).__init__(value, variable_param)
         self.name = name
 
-    def apply_to(self, arguments, environment, caller):
+    def apply_to(self, arguments, environment, caller, debug):
         """Apply to arguments in environment. Eval info stored with caller for debugging"""
         self.check_args(arguments)
         # Create an environment to apply the macro in
@@ -264,7 +267,7 @@ class MacroExpression(ApplicableLispExpression):
         self._define_args(arguments, env)
         # Evaluate the macro to get code to interpret, then interpret that code
         # Expand in a child environment of the one passed
-        return caller.track_result(self.body.evaluate(env)).evaluate(environment)
+        return caller.track_result(self.body.evaluate(env, debug)).evaluate(environment, debug)
 
     def is_macro(self):
         return True
@@ -298,14 +301,14 @@ class ListExpression(LispExpression):
         """Append an item to the front of this list"""
         return ListExpression([other] + self.value)
         
-    def evaluate(self, environment):
+    def evaluate(self, environment, debug):
         """Apply the first item of the list to the rest of the list"""
         if len(self.value) == 0:
             return self
         else:
-            fn = self.value[0].evaluate(environment)
+            fn = self.value[0].evaluate(environment, debug)
             if issubclass(type(fn), ApplicableLispExpression):
-                return fn.apply_to(ListExpression(self.value[1:]), environment, self)
+                return fn.apply_to(ListExpression(self.value[1:]), environment, self, debug)
             else:
                 raise NotAFunctionError(fn)
             

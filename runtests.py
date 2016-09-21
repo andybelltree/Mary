@@ -2,7 +2,6 @@
 
 from os.path import dirname, join
 from os import listdir
-from util import interpret_file
 from lisp.interpreter import Interpreter
 from lisp.LispErrors import *
 from difflib import Differ
@@ -22,7 +21,7 @@ def runtest(interpreter, testfile, testname):
     diff = Differ()
     print("** Results of {} **".format(testname))
     try:
-        results = interpret_file(testfile, interpreter, True).splitlines()
+        results = interpreter.interpret_file(testfile, True).splitlines()
     except RuntimeError:
         print("Maximum recursion depth exceeded in {}\n".format(testname))
     except LispError as e:
@@ -56,13 +55,9 @@ def main():
     for env, title, files in [(DefaultEnvironment(), "With defun:", testfiles),
                                     (MacroEnvironment(), "Without defun:", testfiles),
                                     (MinimumEnvironment(), "Minimal Lisp:", mintestfiles)]:
-        interpreter = Interpreter(env)
-        libs = env.libs
         print("="*5 + title + "="*5 + "\n")
         for testfile, testname in files:
-            for lib in libs:
-                interpret_file(join(dirname(__file__), lib), interpreter)
-            runtest(interpreter, testfile, testname)
+            runtest(Interpreter(env), testfile, testname)
 
 if __name__ == "__main__":
     main()

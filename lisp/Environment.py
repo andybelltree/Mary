@@ -96,27 +96,27 @@ class BaseEnvironment(Environment):
     def _define_defmacro(self):
         """Defines the defmacro function"""
         self.define_function(DEFMACRO, 
-            lambda args, env: env.define(args[0], MacroExpression(args[0], args[1:])),
+                             lambda args, env, debug: env.define(args[0], MacroExpression(args[0], args[1:])),
              3)
 
     def _define_lambda(self):
         """Defines the lambda function"""
-        self.define_function(LAMBDA, lambda args, env : LambdaExpression(args, env))
+        self.define_function(LAMBDA, lambda args, env, debug : LambdaExpression(args, env))
 
     def _define_defun(self):
         """Defines function definition"""
         self.define_function(DEFUN,
-            lambda args, env: env.define(args[0], LambdaExpression(args[1:], env)),
+                             lambda args, env, debug: env.define(args[0], LambdaExpression(args[1:], env)),
              3)
 
     def _define_quote(self):
         """Defines the quote function"""
-        self.define_function(QUOTE, lambda args, env: args[0], 1)
+        self.define_function(QUOTE, lambda args, env, debug: args[0], 1)
 
 
     def _define_quasiquote(self):
         """Defines backquote"""
-        def quasiquote(args, env):
+        def quasiquote(args, env, debug):
             """Backquote function for quasiquote read macro"""
             def quasiquote_expand(args, backquotes):
                 """Called recursively by backquote function
@@ -124,7 +124,7 @@ class BaseEnvironment(Environment):
                 spliced into upper layer"""
                 # if there as many commas as backquotes encountered, evaluate the expression
                 if backquotes == 0:
-                    return args.evaluate(env)
+                    return args.evaluate(env, debug)
                 # if you have an atom or an empty list, just return
                 if args.atom() or args.is_empty():
                     return make_list(args)
@@ -174,24 +174,24 @@ class BaseEnvironment(Environment):
         
     def _define_if(self):
         """Defines the if 'function'"""
-        def if_fn(args, env):
-            if args[0].evaluate(env).is_nill():
-                return args[2].evaluate(env) if len(args) > 2 else Nils.nil
+        def if_fn(args, env, debug):
+            if args[0].evaluate(env,debug).is_nill():
+                return args[2].evaluate(env,debug) if len(args) > 2 else Nils.nil
             else:
-                return args[1].evaluate(env)
+                return args[1].evaluate(env,debug)
         self.define_function(IF, if_fn , 2)
 
     def _define_atom(self):
         """Defines the atom function. True if argument is an atom, else ()"""
-        def atom(args, env):
-            arg = args[0].evaluate(env)
+        def atom(args, env, debug):
+            arg = args[0].evaluate(env, debug)
             return arg if arg.atom() else Nils.nil
         self.define_function(IS_ATOM, atom, 1)
 
     def _define_car(self):
         """Defines the car function"""
-        def car(args, env):
-            exp = args[0].evaluate(env)
+        def car(args, env, debug):
+            exp = args[0].evaluate(env, debug)
             if not (issubclass(type(exp), AtomExpression) or type(exp) == ListExpression):
                 raise TypeError(CAR, exp, "List or Symbol")
             return exp.car()
@@ -199,8 +199,8 @@ class BaseEnvironment(Environment):
 
     def _define_cdr(self):
         """Defines the cdr function"""
-        def cdr(args, env):
-            exp = args[0].evaluate(env)
+        def cdr(args, env, debug):
+            exp = args[0].evaluate(env, debug)
             if not (issubclass(type(exp), AtomExpression) or type(exp) == ListExpression):
                 raise TypeError(CDR, exp, "List or Symbol")
             return exp.cdr()
@@ -208,9 +208,9 @@ class BaseEnvironment(Environment):
 
     def _define_cons(self):
         """Defines the cons function"""
-        def cons(args, env):
-            expr1 = args[0].evaluate(env)
-            expr2 = args[1].evaluate(env)
+        def cons(args, env, debug):
+            expr1 = args[0].evaluate(env, debug)
+            expr2 = args[1].evaluate(env, debug)
             if not (type(expr2) == ListExpression or
                     (issubclass(type(expr2), AtomExpression) and
                                 issubclass(type(expr1), AtomExpression))):
@@ -221,9 +221,9 @@ class BaseEnvironment(Environment):
 
     def _define_subtract(self):
         """Defines the subtract function"""        
-        def subtract(args, env):
-            expr1 = args[0].evaluate(env)
-            expr2 = args[1].evaluate(env)
+        def subtract(args, env, debug):
+            expr1 = args[0].evaluate(env, debug)
+            expr2 = args[1].evaluate(env, debug)
             if not type(expr1) == type(expr2) == NumberExpression:
                 raise TypeError(SUBTRACT, "{} and {}".format(expr1, expr2), "Numbers")
             else:
@@ -232,9 +232,9 @@ class BaseEnvironment(Environment):
 
     def _define_lessthan(self):
         """Defines the less than function"""        
-        def lessthan(args, env):
-            expr1 = args[0].evaluate(env)
-            expr2 = args[1].evaluate(env)
+        def lessthan(args, env, debug):
+            expr1 = args[0].evaluate(env, debug)
+            expr2 = args[1].evaluate(env, debug)
             try:
                 return expr1.lessthan(expr2)
             except AttributeError:
@@ -244,8 +244,8 @@ class BaseEnvironment(Environment):
 
     def _define_print_sym(self):
         """Defines print function"""
-        def print_sym(args, env):
-            print_val = args[0].evaluate(env)
+        def print_sym(args, env, debug):
+            print_val = args[0].evaluate(env, debug)
             if print_val.is_empty():
                 print("nil", end="")
             else:
@@ -352,15 +352,15 @@ class MinimumEnvironment(BaseEnvironment):
 class PythonEnvironment(DefaultEnvironment):
     def _define_pythoncall(self):
         """Defines the python call function"""
-        def pycall(args, env):
+        def pycall(args, env, debug):
             if len(args) < 1:
                 raise WrongNumParamsError(PYCALL, 1, len(args))
-            pyfunc = args[0].evaluate(env)
+            pyfunc = args[0].evaluate(env, debug)
             if not pyfunc.atom():
                 raise BadInputError("python function", pyfunc)
             python_exp = "{}({})".format(
                 str(pyfunc),
-                ", ".join([str(arg.evaluate(env).value) for arg in args[1:]]))
+                ", ".join([str(arg.evaluate(env, debug).value) for arg in args[1:]]))
             try:
                 result = eval(python_exp)
             except Exception as e:

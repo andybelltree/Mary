@@ -2,7 +2,6 @@
 
 from os.path import dirname, join
 from os import listdir
-from util import interpret_file
 from lisp.interpreter import Interpreter
 from lisp.LispErrors import *
 from difflib import Differ
@@ -24,7 +23,7 @@ diff = Differ()
 for testfile, testname in testfiles:
     interpr = Interpreter()
     try:
-        results = interpret_file(testfile, interpr, True).splitlines()
+        results = interpr.interpret_file(testfile, True).splitlines()
     except RuntimeError:
         print("Maximum recursion depth exceeded in {}\n".format(testname))
     except LispError as e:

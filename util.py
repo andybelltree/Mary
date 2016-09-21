@@ -39,12 +39,6 @@ def save_history(histfile):
     readline.set_history_length(1000)
     readline.write_history_file(histfile)
 
-def interpret_file(filename, interpreter, all_results=False):
-    """Run interpreter on a file"""
-    with open(filename, 'r') as f:
-        results = interpreter.evaluate(f.read())
-    return "\n".join([str(result) for result in results]) if all_results else str(results[-1])
-
 def resolve_keyword(keyword, line, interpreter):
     """Performs commands associated with keywords
 
@@ -62,7 +56,7 @@ def resolve_keyword(keyword, line, interpreter):
     elif len(line) > len(keyword) and line[len(keyword)] == " ":
         argument = line.split()[1]
         if KEYWORDS[keyword] == "import":
-            print(interpret_file(argument + ".lisp", interpreter))
+            print(interpreter.interpret_file(argument + ".lisp"))
         elif KEYWORDS[keyword] == "mode_edit":
             if argument not in {"on", "off"}:
                 raise KeywordError(keyword, "Argument must be 'on' or 'off'.")
