@@ -282,7 +282,7 @@ class BaseEnvironment(Environment):
                     termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
                 return ch
             
-        def input_char(args, env):
+        def input_char(args, env, debug):
             ch = getch()
             # Replace any carriage returns with newlines
             if ord(ch) == 13:
@@ -295,7 +295,7 @@ class BaseEnvironment(Environment):
             sys.stdout.flush()
             return LispExpression.create_atom(ch)
 
-        self.define_function(INPUT_CHAR, input_char)
+        self.define_function(INPUT_CHAR, input_char, 0)
 
     def _define_gensym(self):
         """Defines the gensym function to generate a symbol that doesn't yet exist"""

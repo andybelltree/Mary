@@ -83,13 +83,26 @@
 	       player)
   )
 
+(defun full_board? (board)
+  (all?
+   (map (lambda (row)
+	  (all? (map
+		 (lambda (square) (not (eq? square '-)))
+		 row)))
+	board))
+  )
+
 (defun complete? (board player)
-  (if
-   (or
+  (cond
+   ((or
     (horizontal? board player)
     (vertical? board player)
     (diagonal? board player))
     (progn (println player 'wins!) 't))
+   ((full_board? board)
+    (progn (println 'Draw!) 't)
+    )
+   )
 )
 
 (defun main ()

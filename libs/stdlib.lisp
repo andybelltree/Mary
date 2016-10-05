@@ -346,10 +346,23 @@
 	(append (flatten (car l)) (flatten (cdr l)))))
 )
 
-(defun reverse (l)
+(defun slow_reverse (l)
   (if (pair? l)
       (append (reverse (cdr l)) (cons (car l) ()))
       l
+      )
+  )
+
+(defun reverse (l)
+  (if (pair? l)
+      (reverse_helper (cons (car l) ()) (cdr l))
+      l)
+  )
+
+(defun reverse_helper (prev curr)
+  (if (pair? curr)
+      (reverse_helper (cons (car curr) prev) (cdr curr))
+      (cons (car curr) prev)
       )
   )
 

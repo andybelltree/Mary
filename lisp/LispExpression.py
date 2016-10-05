@@ -226,7 +226,10 @@ class LambdaExpression(ApplicableLispExpression):
         self.environment = parent_environment
 
     def apply_to(self, arguments, environment, caller, debug):
-        """Apply to arguments in environment. Eval info stored with caller for debugging"""
+        """
+        Apply to arguments in environment.
+        Eval info stored with caller for debugging if debug flag set.
+        """
         # Arguments are evaluated first
         arguments = ListExpression(
             [argument.evaluate(environment, debug) for argument in arguments.value])

@@ -52,7 +52,7 @@ def main():
     if not args.f:
         repl(interpreter, args.v)
     else:
-        print(interpret_file(args.f, interpreter))
+        print(interpreter.interpret_file(args.f))
 
 if __name__ == "__main__":
     main()

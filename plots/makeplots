@@ -3,6 +3,7 @@ set terminal postscript eps enhanced color font 'Helvetica'
 set output 'mary.eps'
 set xlabel 'Items Sorted'
 set ylabel 'Time Taken (seconds)'
+set title 'Time taken for quicksort in Mary'
 set key bottom right
 set yrange[0:]
 f(x) = a*x*log(x) + b
@@ -11,6 +12,7 @@ plot "times" using 1:2 title "Mary" with points, f(x) title "{/Helvetica-Italic 
 set output 'python.eps'
 h(x) = e*x*log(x) + f
 fit h(x) "times" using 1:3 via e, f
+set title 'Time taken for quicksort in Python'
 plot "times" using 1:3 title "Python" with points, h(x) title "{/Helvetica-Italic nlogn} regression"
 set output 'pythonvmary.eps'
 set key top left
