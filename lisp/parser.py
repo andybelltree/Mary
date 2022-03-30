@@ -44,7 +44,7 @@ class Parser(object):
         for k in self._syntax:
             special_chars += k
         special_chars = "".join(set(special_chars))
-        self._legal_atom_re = r"^[^\s){}]+".format(special_chars)
+        self._legal_atom_re = r"^[^\s(){}]+".format(special_chars)
 
     def _parse(self, source):
         """Parses a single expression into the Abstract Syntax Tree"""
